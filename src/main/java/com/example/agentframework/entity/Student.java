@@ -11,7 +11,12 @@ import java.util.Date;
 public class Student {
     private Long id;
     private String studentId;
-    private String name;
-    private String courses;
+    private String username;
+    private String password;
+    private String realName;
+    private String email;
+    private String phone;
+    private String classes;
     private Date createdAt;
+    private Date updatedAt;
 }

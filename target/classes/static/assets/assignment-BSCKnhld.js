@@ -1,1 +1,0 @@
-import{a as n}from"./index-qFyJwsfU.js";const t="/api";function g(s){return n.get(`${t}/assignments/course/${s}`)}function u(s){return n.get(`${t}/assignments/${s}`)}function a(s,e){return n.post(`${t}/assignments/${s}/submit`,e)}function m(s,e){return n.get(`${t}/assignments/${s}/submits?userId=${e}`)}export{u as a,m as b,g,a as s};

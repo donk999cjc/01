@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>学生端 - 跨课程智能教学平台</title>
+    <link rel="stylesheet" href="https://unpkg.com/element-ui@2.15.14/lib/theme-chalk/index.css">
+    <script src="https://unpkg.com/vue@2.7.16/dist/vue.min.js"></script>
+    <script src="https://unpkg.com/element-ui@2.15.14/lib/index.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:-apple-system,BlinkMacSystemFont,'Microsoft YaHei',sans-serif;background:#f5f7fa}
+
+        .app{display:flex;height:100vh}
+
+        .sidebar{width:220px;background:linear-gradient(180deg,#0f0c29 0%,#302b63 50%,#24243e 100%);color:#fff;display:flex;flex-direction:column;flex-shrink:0}
+        .logo{padding:25px 20px;text-align:center;border-bottom:1px solid rgba(255,255,255,0.1)}
+        .logo h2{font-size:16px;font-weight:bold}
+        .logo p{font-size:11px;opacity:0.6;margin-top:4px}
+
+        .nav-section{padding:15px 0}
+        .nav-label{font-size:11px;text-transform:uppercase;letter-spacing:1px;padding:8px 20px;color:rgba(255,255,255,0.4)}
+        .nav-item{display:flex;align-items:center;padding:12px 22px;cursor:pointer;transition:all 0.2s;border-left:3px solid transparent;color:rgba(255,255,255,0.75);user-select:none}
+        .nav-item:hover{background:rgba(255,255,255,0.08);color:#fff}
+        .nav-item.active{background:rgba(103,194,58,0.15);border-left-color:#67c23a;color:#fff}
+        .nav-icon{font-size:18px;width:28px;text-align:center;margin-right:10px}
+        .nav-text{font-size:14px}
+
+        .sidebar-footer{margin-top:auto;padding:18px 22px;border-top:1px solid rgba(255,255,255,0.1)}
+        .logout-btn{display:flex;align-items:center;gap:8px;padding:10px 16px;background:rgba(244,67,54,0.2);border-radius:6px;cursor:pointer;transition:all 0.2s;font-size:13px;user-select:none}
+        .logout-btn:hover{background:rgba(244,67,54,0.35)}
+
+        .main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+        .topbar{height:56px;background:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 30px;box-shadow:0 1px 4px rgba(0,0,0,0.06);flex-shrink:0}
+        .topbar-title{font-size:17px;font-weight:600;color:#303133}
+        .content{flex:1;overflow-y:auto;padding:24px}
+
+        /* 上传 */
+        .upload-zone{border:2px dashed #dcdfe6;border-radius:12px;padding:40px;text-align:center;cursor:pointer;transition:all 0.3s;background:#fafafa}
+        .upload-zone:hover{border-color:#67c23a;background:#f0fdf4}
+        .upload-zone.has-img{border-color:#67c23a;border-style:solid}
+        .preview-img{max-width:100%;max-height:260px;border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,0.12)}
+
+        /* 卡片 */
+        .card{background:#fff;border-radius:10px;padding:18px;margin-bottom:12px;box-shadow:0 2px 8px rgba(0,0,0,0.05)}
+        .card-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+        .card-title{font-size:15px;font-weight:600;color:#303133}
+        .card-meta{display:flex;gap:16px;font-size:12px;color:#909399;margin-bottom:8px}
+        .card-desc{font-size:13px;color:#606266;line-height:1.6}
+
+        /* 批改结果 */
+        .result-card{background:linear-gradient(135deg,#43cea2,#185a9d);border-radius:14px;padding:22px;color:#fff;margin-top:14px}
+        .result-fb{background:rgba(255,255,255,0.96);border-radius:8px;padding:14px;color:#333}
+        .rfb-item{position:relative;padding-left:18px;margin-bottom:8px;line-height:1.7;font-size:13px}
+        .rfb-item::before{content:'✓';position:absolute;left:0;color:#67c23a;font-weight:bold}
+
+        /* 图表 */
+        .chart-card{background:#fff;border-radius:10px;padding:20px;margin-bottom:16px;box-shadow:0 2px 8px rgba(0,0,0,0.05)}
+        .chart-title{font-size:15px;font-weight:600;color:#303133;margin-bottom:12px;padding-left:10px;border-left:3px solid #67c23a}
+
+        /* 统计 */
+        .stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:16px}
+        .stat-box{background:#fff;border-radius:10px;padding:16px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,0.05)}
+        .stat-icon{font-size:26px;margin-bottom:5px}
+        .stat-val{font-size:24px;font-weight:bold;color:#67c23a}
+        .stat-lbl{font-size:12px;color:#909399;margin-top:3px}
+
+        /* 历史记录 */
+        .history-row{display:flex;align-items:center;padding:12px 16px;border-bottom:1px solid #f0f0f0}
+        .history-row:hover{background:#fafafa}
+
+        /* 聊天框 */
+        .chat-container{height:calc(100vh - 120px);display:flex;flex-direction:column;background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.05)}
+        .chat-messages{flex:1;overflow-y:auto;padding:20px}
+        .chat-msg{margin-bottom:16px;display:flex;gap:10px}
+        .chat-msg.user{flex-direction:row-reverse}
+        .msg-avatar{width:36px;height:36px;border-radius:50%;background:#667eea;color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+        .msg-avatar.ai{background:#67c23a}
+        .msg-content{max-width:70%;padding:12px 16px;border-radius:12px;font-size:14px;line-height:1.6}
+        .chat-msg.user .msg-content{background:#667eea;color:#fff}
+        .chat-msg.ai .msg-content{background:#f5f7fa;color:#333}
+        .chat-input-area{padding:16px;border-top:1px solid #eee;display:flex;gap:10px}
+        .chat-input{flex:1;padding:10px 14px;border:1px solid #ddd;border-radius:20px;font-size:14px;outline:none}
+        .chat-input:focus{border-color:#67c23a}
+        .send-btn{padding:10px 24px;background:#67c23a;color:#fff;border:none;border-radius:20px;font-size:14px;cursor:pointer;transition:all 0.2s}
+        .send-btn:hover{background:#5daf50}
+        .send-btn:disabled{background:#ccc;cursor:not-allowed}
+
+        /* 个人信息 */
+        .profile-form{max-width:500px}
+        .form-item{margin-bottom:18px}
+        .form-label{display:block;font-size:14px;font-weight:500;color:#333;margin-bottom:6px}
+    </style>
+</head>
+<body>
+<div id="app" class="app">
+    <!-- 侧边栏 -->
+    <div class="sidebar">
+        <div class="logo">
+            <h2>智能教学平台</h2>
+            <p>学生学习台</p>
+        </div>
+        <div class="nav-section">
+            <div class="nav-label">我的学习</div>
+            <div class="nav-item" :class="{active:currentTab==='assignments'}" @click="switchTab('assignments')">
+                <span class="nav-icon">📚</span><span class="nav-text">作业列表</span>
+            </div>
+            <div class="nav-item" :class="{active:currentTab==='submit'}" @click="switchTab('submit')">
+                <span class="nav-icon">📤</span><span class="nav-text">提交作业</span>
+            </div>
+            <div class="nav-item" :class="{active:currentTab==='results'}" @click="switchTab('results')">
+                <span class="nav-icon">📋</span><span class="nav-text">批改结果</span>
+            </div>
+            <div class="nav-item" :class="{active:currentTab==='analysis'}" @click="switchTab('analysis')">
+                <span class="nav-icon">📊</span><span class="nav-text">成绩分析</span>
+            </div>
+
+            <div class="nav-label">互动交流</div>
+            <div class="nav-item" :class="{active:currentTab==='chat'}" @click="switchTab('chat')">
+                <span class="nav-icon">💬</span><span class="nav-text">AI 助手</span>
+            </div>
+
+            <div class="nav-label">账号管理</div>
+            <div class="nav-item" :class="{active:currentTab==='profile'}" @click="switchTab('profile')">
+                <span class="nav-icon">�</span><span class="nav-text">个人信息</span>
+            </div>
+
+            <div class="nav-label">信息查询</div>
+            <div class="nav-item" :class="{active:currentTab==='teachers'}" @click="switchTab('teachers')">
+                <span class="nav-icon">👨‍🏫</span><span class="nav-text">教师信息</span>
+            </div>
+        </div>
+        <div class="sidebar-footer">
+            <div class="logout-btn" @click="handleLogout">退出登录</div>
+        </div>
+    </div>
+
+    <!-- 主内容 -->
+    <div class="main">
+        <div class="topbar">
+            <div class="topbar-title">{{ tabTitle }} - {{ userInfo.realName || '学生' }}</div>
+            <el-button size="small" icon="el-icon-refresh" @click="loadAll">刷新</el-button>
+        </div>
+        <div class="content">
+
+            <!-- TAB 1: 作业列表 -->
+            <div v-show="currentTab==='assignments'">
+                <h3 style="margin-bottom:14px;color:#303133">我的作业列表（{{ assignments.length }}）</h3>
+                <div v-loading="loading">
+                    <div v-for="a in assignments" :key="a.id" class="card">
+                        <div class="card-header">
+                            <span class="card-title">{{ a.title }}</span>
+                            <el-tag size="mini" :type="statusType(a.status)">{{ statusText(a.status) }}</el-tag>
+                        </div>
+                        <div class="card-meta">
+                            <span>课程：{{ a.courseId }}</span>
+                            <span>截止：{{ a.dueDate || '未设' }}</span>
+                            <span>{{ a.totalScore || 100 }}分</span>
+                        </div>
+                        <div class="card-desc">{{ a.description || '暂无描述' }}</div>
+                        <el-button size="small" type="primary" style="margin-top:8px" @click="goSubmit(a)">提交作业</el-button>
+                    </div>
+                    <div v-if="!loading&&!assignments.length" style="text-align:center;padding:50px;color:#c0c4cc"><div style="font-size:36px;margin-bottom:8px">📭</div>暂无作业</div>
+                </div>
+            </div>
+
+            <!-- TAB 2: 提交作业 -->
+            <div v-show="currentTab==='submit'">
+                <h3 style="margin-bottom:14px;color:#303133">提交作业</h3>
+
+                <div class="card">
+                    <label style="display:block;font-weight:600;margin-bottom:8px;font-size:13px;">选择要提交的作业：</label>
+                    <el-select v-model="selAid" placeholder="请选择作业" size="medium" style="width:100%">
+                        <el-option v-for="a in assignments" :key="a.id" :label="a.title + ' (' + a.courseId + ')'" :value="a.id"></el-option>
+                    </el-select>
+                    <div v-if="selAssignment" style="margin-top:10px;padding:12px;background:#f5f7fa;border-radius:6px;font-size:12px;line-height:1.7">
+                        课程：{{ selAssignment.courseId }} | 总分：{{ selAssignment.totalScore||100 }}分 | 截止：{{ selAssignment.dueDate||'未设置' }}
+                    </div>
+                </div>
+
+                <div class="upload-zone" :class="{'has-img':!!selectedFile}" @click="$refs.fileInput.click()" @dragover.prevent @drop.prevent="onDrop">
+                    <input type="file" ref="fileInput" accept="image/*" @change="onFileChange" style="display:none">
+                    <template v-if="!selectedFile">
+                        <div style="font-size:38px;margin-bottom:6px">📷</div>
+                        <div style="color:#606266;font-size:14px">点击或拖拽上传作业图片</div>
+                        <div style="color:#c0c4cc;font-size:12px;margin-top:4px">支持 JPG / PNG</div>
+                    </template>
+                </div>
+
+                <div v-if="selectedFile" style="text-align:center;margin-top:12px;">
+                    <img :src="previewUrl" class="preview-img">
+                    <div style="margin-top:10px;display:flex;gap:8px;justify-content:center;">
+                        <el-button size="small" @click="clearImg">清除</el-button>
+                        <el-button size="small" type="primary" :loading="submitting" :disabled="!selAid||!selectedFile" @click="doSubmit">确认提交</el-button>
+                    </div>
+                </div>
+
+                <div v-if="submitOk" class="result-card" style="margin-top:16px">
+                    <div style="text-align:center;font-size:18px;font-weight:bold">提交成功！</div>
+                    <div style="text-align:center;font-size:13px;opacity:0.85;margin-top:4px">请等待教师使用 AI 批改您的作业</div>
+                </div>
+            </div>
+
+            <!-- TAB 3: 批改结果 -->
+            <div v-show="currentTab==='results'">
+                <h3 style="margin-bottom:14px;color:#303133">我的批改结果（{{ gradedSubmissions.length }}）</h3>
+
+                <div v-loading="loading">
+                    <template v-for="sub in gradedSubmissions">
+                        <div :key="sub.id" class="card">
+                            <div class="card-header">
+                                <span class="card-title">{{ getAssignTitle(sub.assignmentId) }}</span>
+                                <el-tag size="mini" type="success">已批改</el-tag>
+                            </div>
+
+                            <div style="text-align:center;padding:14px 0">
+                                <span style="font-size:42px;font-weight:bold;color:#67c23a">{{ sub.score }}</span>
+                                <span style="font-size:14px;color:#909399;margin-left:4px">/ {{ getAssignTotal(sub.assignmentId) }} 分</span>
+                            </div>
+
+                            <div v-if="sub.imageAnalysis" class="result-card">
+                                <div class="result-fb">
+                                    <h4 style="margin-bottom:8px;font-size:13px">批改反馈</h4>
+                                    <div v-for="(item,i) in splitFeedback(sub.imageAnalysis)" :key="i" class="rfb-item">{{ item }}</div>
+                                </div>
+                            </div>
+
+                            <!-- 学习总结 -->
+                            <div v-if="sub.learningSummary" style="margin-top:12px;padding:14px;background:#fff9e6;border-left:4px solid #E6A23C;border-radius:8px;">
+                                <h4 style="margin-bottom:10px;color:#E6A23C;font-size:14px">📝 学习总结与经验</h4>
+                                <div style="white-space:pre-line;line-height:1.7;font-size:13px;color:#555;">
+                                    {{ sub.learningSummary }}
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+
+                    <div v-if="!loading&&!gradedSubmissions.length" style="text-align:center;padding:50px;color:#c0c4cc">
+                        <div style="font-size:36px;margin-bottom:8px">📝</div>暂无批改结果，请先提交作业
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 4: 成绩分析 -->
+            <div v-show="currentTab==='analysis'">
+                <div class="stat-grid">
+                    <div class="stat-box"><div class="stat-icon">📝</div><div class="stat-val">{{ myStats.total }}</div><div class="stat-lbl">已提交</div></div>
+                    <div class="stat-box"><div class="stat-icon">✅</div><div class="stat-val">{{ myStats.avgScore }}</div><div class="stat-lbl">平均正确率%</div></div>
+                    <div class="stat-box"><div class="stat-icon">🏆</div><div class="stat-val" style="color:#E6A23C">{{ myStats.maxScore||'-' }}</div><div class="stat-lbl">最高分</div></div>
+                </div>
+
+                <div class="chart-card">
+                    <div class="chart-title">我的作业正确率趋势</div>
+                    <div id="myChart" style="height:380px"></div>
+                </div>
+
+                <div class="chart-card">
+                    <div class="chart-title">最近提交记录</div>
+                    <div class="history-row" style="background:#fafafa;font-weight:bold;font-size:12px">
+                        <span style="width:140px">作业名称</span>
+                        <span style="width:70px;text-align:center">分数</span>
+                        <span style="width:80px;text-align:center">状态</span>
+                        <span style="flex:1">时间</span>
+                    </div>
+                    <div v-for="sub in recentSubs" :key="sub.id" class="history-row">
+                        <span style="width:140px;font-weight:500;color:#303133">{{ getAssignTitle(sub.assignmentId) }}</span>
+                        <span style="width:70px;text-align:center;font-weight:bold" :style="{color:sub.score>=85?'#67c23a':sub.score>=60?'#E6A23C':'#F56C6C'}">{{ sub.score||'-' }}</span>
+                        <span style="width:80px;text-align:center">
+                            <el-tag size="mini" :type="sub.status==='graded'?'success':'info'">{{ sub.status==='graded'?'已批改':'待批改' }}</el-tag>
+                        </span>
+                        <span style="flex:1;color:#909399;font-size:12px">{{ sub.submittedAt||'-' }}</span>
+                    </div>
+                    <div v-if="!recentSubs.length" style="text-align:center;padding:28px;color:#c0c4cc">暂无记录</div>
+                </div>
+            </div>
+
+            <!-- TAB 5: AI助手 -->
+            <div v-show="currentTab==='chat'" style="height:calc(100vh - 150px)">
+                <div class="chat-container">
+                    <div class="chat-messages" ref="chatMessages">
+                        <div v-for="(msg,index) in chatMessages" :key="index" class="chat-msg" :class="msg.role">
+                            <div class="msg-avatar" :class="msg.role">{{ msg.role==='user'?'我':'AI' }}</div>
+                            <div class="msg-content">{{ msg.content }}</div>
+                        </div>
+                        <div v-if="chatLoading" class="chat-msg ai">
+                            <div class="msg-avatar ai">AI</div>
+                            <div class="msg-content">思考中...</div>
+                        </div>
+                    </div>
+                    <div class="chat-input-area">
+                        <input type="text" class="chat-input" v-model="chatInput" placeholder="输入您的问题..." @keyup.enter="sendMessage" :disabled="chatLoading">
+                        <button class="send-btn" @click="sendMessage" :disabled="chatLoading||!chatInput">发送</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 6: 个人信息 -->
+            <div v-show="currentTab==='profile'">
+                <h3 style="margin-bottom:20px;color:#303133">个人信息管理</h3>
+
+                <div class="card profile-form">
+                    <div class="form-item">
+                        <label class="form-label">用户名</label>
+                        <el-input v-model="userInfo.username" disabled></el-input>
+                    </div>
+
+                    <div class="form-item">
+                        <label class="form-label">真实姓名</label>
+                        <el-input v-model="profileForm.realName" placeholder="请输入真实姓名"></el-input>
+                    </div>
+
+                    <div class="form-item">
+                        <label class="form-label">学号</label>
+                        <el-input v-model="userInfo.studentId" disabled></el-input>
+                    </div>
+
+                    <div class="form-item">
+                        <label class="form-label">邮箱</label>
+                        <el-input v-model="profileForm.email" placeholder="请输入邮箱"></el-input>
+                    </div>
+
+                    <div class="form-item">
+                        <label class="form-label">手机号</label>
+                        <el-input v-model="profileForm.phone" placeholder="请输入手机号"></el-input>
+                    </div>
+
+                    <el-button type="primary" @click="saveProfile" style="margin-top:10px">保存修改</el-button>
+                </div>
+
+                <div class="card profile-form" style="margin-top:20px">
+                    <h4 style="margin-bottom:16px;color:#303133">修改密码</h4>
+                    <div class="form-item">
+                        <label class="form-label">当前密码</label>
+                        <el-input v-model="passwordForm.oldPassword" type="password" placeholder="请输入当前密码"></el-input>
+                    </div>
+                    <div class="form-item">
+                        <label class="form-label">新密码</label>
+                        <el-input v-model="passwordForm.newPassword" type="password" placeholder="请输入新密码"></el-input>
+                    </div>
+                    <div class="form-item">
+                        <label class="form-label">确认新密码</label>
+                        <el-input v-model="passwordForm.confirmPassword" type="password" placeholder="请再次输入新密码"></el-input>
+                    </div>
+                    <el-button type="warning" @click="changePassword">修改密码</el-button>
+                </div>
+            </div>
+
+            <!-- TAB 7: 教师信息 -->
+            <div v-show="currentTab==='teachers'">
+                <h3 style="margin-bottom:14px;color:#303133">教师信息</h3>
+                <div v-loading="loading" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px">
+                    <div v-for="t in teachers" :key="t.id" class="card">
+                        <div class="card-title">{{ t.realName }}</div>
+                        <div class="card-meta" style="flex-direction:column;gap:5px">
+                            <span>工号：{{ t.teacherId }}</span>
+                            <span>邮箱：{{ t.email||'暂无' }}</span>
+                            <span>电话：{{ t.phone||'暂无' }}</span>
+                            <span>部门：{{ t.department||'暂无' }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div><!-- /content -->
+    </div><!-- /main -->
+</div>
+
+<script>
+new Vue({
+    el:'#app',
+    data(){
+        return {
+            currentTab:'assignments',
+
+            // 用户信息
+            userInfo:{},
+            profileForm:{
+                realName:'',
+                email:'',
+                phone:''
+            },
+            passwordForm:{
+                oldPassword:'',
+                newPassword:'',
+                confirmPassword:''
+            },
+
+            // 提交
+            selAid:null,
+            selectedFile:null,
+            previewUrl:'',
+            submitting:false,
+            submitOk:false,
+
+            // 数据
+            assignments:[],
+            submissions:[],
+            teachers:[],
+            loading:false,
+
+            chart:null,
+
+            // 聊天
+            chatMessages:[
+                {role:'ai',content:'您好！我是AI学习助手，有什么可以帮您的吗？'}
+            ],
+            chatInput:'',
+            chatLoading:false
+        }
+    },
+    computed:{
+        tabTitle(){
+            return {
+                assignments:'作业列表',
+                submit:'提交作业',
+                results:'批改结果',
+                analysis:'成绩分析',
+                chat:'AI 助手',
+                profile:'个人信息',
+                teachers:'教师信息'
+            }[this.currentTab]
+        },
+        selAssignment(){ return this.assignments.find(a=>a.id===this.selAid) },
+        gradedSubmissions(){
+            return (this.submissions||[]).filter(s=>s.studentId===this.userInfo.studentId&&s.status==='graded')
+        },
+        recentSubs(){
+            return (this.submissions||[]).filter(s=>s.studentId===this.userInfo.studentId).slice(-10).reverse()
+        },
+        myStats(){
+            const mine=this.submissions.filter(s=>s.studentId===this.userInfo.studentId&&s.score!=null)
+            const g=mine.filter(s=>s.status==='graded')
+            return{
+                total:g.length,
+                avgScore:g.length?(g.reduce((a,b)=>a+Number(b.score),0)/g.length).toFixed(1):0,
+                maxScore:g.length?Math.max(...g.map(s=>Number(s.score))):null
+            }
+        }
+    },
+    created(){
+        this.initUser()
+        this.loadAll()
+    },
+    mounted(){
+        this.$nextTick(()=>{
+            if(document.getElementById('myChart')){
+                this.chart=echarts.init(document.getElementById('myChart'))
+                window.addEventListener('resize',()=>this.chart&&this.chart.resize())
+            }
+        })
+    },
+    watch:{
+        currentTab(v){
+            if(v==='analysis'){
+                this.$nextTick(()=>this.renderMyChart())
+            }
+        }
+    },
+    methods:{
+        initUser(){
+            try{
+                const userStr=localStorage.getItem('user')
+                if(userStr){
+                    this.userInfo=JSON.parse(userStr)
+                    this.profileForm.realName=this.userInfo.realName||''
+                    this.profileForm.email=this.userInfo.email||''
+                    this.profileForm.phone=this.userInfo.phone||''
+                }
+            }catch(e){
+                console.error(e)
+            }
+        },
+
+        switchTab(tab){
+            this.currentTab=tab
+        },
+
+        handleLogout(){
+            if(confirm('确定要退出登录吗？')){
+                localStorage.removeItem('user')
+                localStorage.removeItem('token')
+                window.location.href='/login.html'
+            }
+        },
+
+        async loadAll(){
+            this.loading=true
+            try{
+                const[r1,r2,r3]=await Promise.all([
+                    fetch('/api/assignments').catch(()=>({json:async()=>[] })),
+                    fetch('/api/submissions').catch(()=>({json:async()=>[] })),
+                    fetch('/api/teachers').catch(()=>({json:async()=>[] }))
+                ])
+                this.assignments=(await r1.json())||[]
+                this.submissions=(await r2.json())||[]
+                this.teachers=(await r3.json())||[]
+                if(this.currentTab==='analysis'){
+                    this.$nextTick(()=>this.renderMyChart())
+                }
+            }catch(e){
+                console.error(e)
+            }finally{
+                this.loading=false
+            }
+        },
+
+        statusText(s){return{draft:'草稿',published:'已发布',closed:'已截止'}[s]||s},
+        statusType(s){return{draft:'info',published:'success',closed:'danger'}[s]||'info'},
+        getAssignTitle(aid){ const a=this.assignments.find(x=>x.id===aid);return a?a.title:`作业${aid}` },
+        getAssignTotal(aid){ const a=this.assignments.find(x=>x.id===aid);return a?a.totalScore:100 },
+        splitFeedback(text){ if(!text)return[];return text.split('\n').filter(s=>s.trim()) },
+
+        goSubmit(a){
+            this.selAid=a.id
+            this.currentTab='submit'
+            this.submitOk=false
+        },
+
+        onFileChange(e){
+            const f=e.target.files[0]
+            if(f)this.readImg(f)
+        },
+        onDrop(e){
+            const f=e.dataTransfer.files[0]
+            if(f&&f.type.startsWith('image/'))this.readImg(f)
+        },
+        readImg(file){
+            this.selectedFile=file
+            // 生成预览URL（使用URL.createObjectURL）
+            if(this.previewUrl){
+                URL.revokeObjectURL(this.previewUrl)
+            }
+            this.previewUrl=URL.createObjectURL(file)
+        },
+        clearImg(){
+            this.selectedFile=null
+            if(this.previewUrl){
+                URL.revokeObjectURL(this.previewUrl)
+                this.previewUrl=''
+            }
+            this.$refs.fileInput.value=''
+        },
+
+        async doSubmit(){
+            if(!this.selAid){
+                this.$message.warning('请选择作业')
+                return
+            }
+            if(!this.selectedFile){
+                this.$message.warning('请选择要上传的作业图片')
+                return
+            }
+
+            this.submitting=true
+            try{
+                const selectedAssignment=this.assignments.find(a=>a.id===this.selAid)
+                const assignmentId=selectedAssignment?selectedAssignment.assignmentId:String(this.selAid)
+
+                // 使用FormData上传文件
+                const formData=new FormData()
+                formData.append('file', this.selectedFile)
+                formData.append('studentId', this.userInfo.studentId)
+                formData.append('assignmentId', assignmentId)
+
+                const res=await fetch(`/api/assignments/${this.selAid}/submit`,{
+                    method:'POST',
+                    body:formData
+                })
+
+                const data=await res.json()
+                if(data.success){
+                    this.submitOk=true
+                    this.$message.success('提交成功！')
+                    this.loadAll()
+
+                    // 清空已选择的文件
+                    this.selectedFile=null
+                    this.previewUrl=''
+                }else{
+                    this.$message.error(data.message||'提交失败')
+                }
+            }catch(e){
+                console.error(e)
+                this.$message.error('网络错误')
+            }finally{
+                this.submitting=false
+            }
+        },
+
+        renderMyChart(){
+            if(!this.chart)return
+            const sorted=[...this.assignments].sort((a,b)=>new Date(a.createdAt||0)-new Date(b.createdAt||0))
+            const xData=sorted.map(a=>a.title||`作业${a.id}`)
+            const scores=sorted.map(a=>{
+                const s=this.submissions.find(sub=>String(sub.assignmentId)===String(a.id)&&sub.studentId===this.userInfo.studentId)
+                return s&&s.score!=null?Number(s.score):null
+            })
+
+            this.chart.setOption({
+                tooltip:{trigger:'axis'},
+                grid:{left:'3%',right:'4%',bottom:'8%',top:'10%',containLabel:true},
+                xAxis:{type:'category',data:xData,axisLabel:{rotate:25}},
+                yAxis:{type:'value',name:'分数',min:0,max:100},
+                series:[{
+                    name:'我的得分',
+                    type:'line',
+                    smooth:true,
+                    data:scores,
+                    connectNulls:false,
+                    lineStyle:{width:3,color:'#67c23a'},
+                    areaStyle:{color:new echarts.graphic.LinearGradient(0,0,0,1,[{offset:0,color:'rgba(103,194,58,0.25)'},{offset:1,color:'rgba(103,194,58,0.02)'}])},
+                    markPoint:{data:[{type:'max',name:'最高'},{type:'min',name:'最低'}]},
+                    markLine:{data:[{type:'average',name:'平均'}],lineStyle:{color:'#E6A23C',type:'dashed'}}
+                }]
+            },true)
+        },
+
+        async sendMessage(){
+            if(!this.chatInput.trim()||this.chatLoading)return
+
+            const message=this.chatInput.trim()
+            this.chatMessages.push({role:'user',content:message})
+            this.chatInput=''
+            this.chatLoading=true
+
+            this.$nextTick(()=>{
+                if(this.$refs.chatMessages){
+                    this.$refs.chatMessages.scrollTop=this.$refs.chatMessages.scrollHeight
+                }
+            })
+
+            try{
+                const res=await fetch('/api/ai/chat',{
+                    method:'POST',
+                    headers:{'Content-Type':'application/json'},
+                    body:JSON.stringify({
+                        message:message,
+                        systemPrompt:'你是一个专业的AI学习助手，专门帮助学生学习。你可以：\n1. 解答学习问题\n2. 提供作业辅导\n3. 解释复杂概念\n4. 给出学习建议\n5. 鼓励学生进步\n请用友好、鼓励的语气回答，用中文回复。'
+                    })
+                })
+
+                const data=await res.json()
+
+                if(data.success&&data.response){
+                    this.chatMessages.push({role:'ai',content:data.response})
+                }else{
+                    this.chatMessages.push({role:'ai',content:'抱歉，AI服务暂时不可用。请稍后再试，或联系管理员检查API配置。'})
+                }
+            }catch(e){
+                console.error('AI调用错误:',e)
+                this.chatMessages.push({role:'ai',content:'网络错误，无法连接到AI服务。请检查网络连接后重试。'})
+            }finally{
+                this.chatLoading=false
+
+                this.$nextTick(()=>{
+                    if(this.$refs.chatMessages){
+                        this.$refs.chatMessages.scrollTop=this.$refs.chatMessages.scrollHeight
+                    }
+                })
+            }
+        },
+
+        saveProfile(){
+            if(!this.profileForm.realName){
+                this.$message.warning('请输入真实姓名')
+                return
+            }
+
+            this.userInfo.realName=this.profileForm.realName
+            this.userInfo.email=this.profileForm.email
+            this.userInfo.phone=this.profileForm.phone
+
+            localStorage.setItem('user',JSON.stringify(this.userInfo))
+            this.$message.success('个人信息保存成功')
+        },
+
+        changePassword(){
+            if(!this.passwordForm.oldPassword){
+                this.$message.warning('请输入当前密码')
+                return
+            }
+            if(!this.passwordForm.newPassword){
+                this.$message.warning('请输入新密码')
+                return
+            }
+            if(this.passwordForm.newPassword!==this.passwordForm.confirmPassword){
+                this.$message.warning('两次输入的密码不一致')
+                return
+            }
+            if(this.passwordForm.newPassword.length<6){
+                this.$message.warning('新密码长度不能少于6位')
+                return
+            }
+
+            this.$message.success('密码修改成功')
+
+            this.passwordForm={
+                oldPassword:'',
+                newPassword:'',
+                confirmPassword:''
+            }
+        }
+    }
+})
+</script>
+</body>
+</html>

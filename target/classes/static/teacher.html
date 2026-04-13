@@ -1,0 +1,1250 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>教师端 - 跨课程智能教学平台</title>
+    <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:'Microsoft YaHei',Arial,sans-serif;background:#f5f7fa}
+        
+        .app{display:flex;height:100vh}
+        
+        /* 侧边栏 */
+        .sidebar{width:220px;background:linear-gradient(180deg,#1a1a2e 0%,#16213e 50%,#0f3460 100%);color:#fff;display:flex;flex-direction:column;flex-shrink:0}
+        .logo{padding:25px 20px;text-align:center;border-bottom:1px solid rgba(255,255,255,0.1)}
+        .logo h2{font-size:16px;font-weight:bold}
+        .logo p{font-size:11px;opacity:0.6;margin-top:4px}
+        
+        .nav-section{padding:15px 0}
+        .nav-label{font-size:11px;text-transform:uppercase;letter-spacing:1px;padding:8px 20px;color:rgba(255,255,255,0.4)}
+        .nav-item{display:flex;align-items:center;padding:12px 22px;cursor:pointer;transition:all 0.2s;border-left:3px solid transparent;color:rgba(255,255,255,0.75)}
+        .nav-item:hover{background:rgba(255,255,255,0.08);color:#fff}
+        .nav-item.active{background:rgba(64,158,255,0.15);border-left-color:#409EFF;color:#fff}
+        .nav-icon{font-size:18px;width:28px;text-align:center;margin-right:10px}
+        .nav-text{font-size:14px}
+        
+        .sidebar-footer{margin-top:auto;padding:18px 22px;border-top:1px solid rgba(255,255,255,0.1)}
+        .logout-btn{display:flex;align-items:center;gap:8px;padding:10px 16px;background:rgba(244,67,54,0.2);border-radius:6px;cursor:pointer;transition:all 0.2s;font-size:13px}
+        .logout-btn:hover{background:rgba(244,67,54,0.35)}
+
+        /* 主内容 */
+        .main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+        .topbar{height:56px;background:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 30px;box-shadow:0 1px 4px rgba(0,0,0,0.06);flex-shrink:0}
+        .topbar-title{font-size:17px;font-weight:600;color:#303133}
+        .content{flex:1;overflow-y:auto;padding:24px}
+
+        /* Tab切换 */
+        .tab-bar{display:flex;gap:0;margin-bottom:20px;background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.06)}
+        .tab-btn{flex:1;padding:14px 20px;text-align:center;cursor:pointer;font-size:14px;font-weight:500;color:#606266;transition:all 0.2s;border-bottom:3px solid transparent}
+        .tab-btn:hover{color:#409EFF;background:#f5f7fa}
+        .tab-btn.active{color:#409EFF;border-bottom-color:#409EFF;background:#ecf5ff}
+
+        /* 上传区域 */
+        .upload-zone{border:2px dashed #dcdfe6;border-radius:12px;padding:45px;text-align:center;cursor:pointer;transition:all 0.3s;background:#fafafa}
+        .upload-zone:hover{border-color:#409EFF;background:#f0f7ff}
+        .upload-zone.has-img{border-color:#67c23a;border-style:solid}
+        .preview-img{max-width:100%;max-height:280px;border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,0.12)}
+
+        /* 批改结果卡片 */
+        .review-card{background:linear-gradient(135deg,#667eea,#764ba2);border-radius:14px;padding:28px;color:#fff;margin-top:18px}
+        .score-big{text-align:center;margin-bottom:16px}
+        .score-num{font-size:58px;font-weight:bold;line-height:1}
+        .score-sub{font-size:14px;opacity:0.85}
+        .feedback-box{background:rgba(255,255,255,0.96);border-radius:10px;padding:18px;color:#333}
+        .fb-item{position:relative;padding-left:20px;margin-bottom:10px;line-height:1.7;font-size:13px}
+        .fb-item::before{content:'✓';position:absolute;left:0;color:#67c23a;font-weight:bold}
+
+        /* 作业卡片 */
+        .card{background:#fff;border-radius:10px;padding:20px;margin-bottom:14px;box-shadow:0 2px 8px rgba(0,0,0,0.05)}
+        .card-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+        .card-title{font-size:15px;font-weight:600;color:#303133}
+        .card-meta{display:flex;gap:18px;font-size:12px;color:#909399;margin-bottom:10px}
+        .card-desc{font-size:13px;color:#606266;margin-bottom:12px;line-height:1.6}
+        .btn-row{display:flex;gap:8px;flex-wrap:wrap}
+
+        /* 图表区域 */
+        .chart-card{background:#fff;border-radius:10px;padding:22px;margin-bottom:18px;box-shadow:0 2px 8px rgba(0,0,0,0.05)}
+        .chart-title{font-size:15px;font-weight:600;color:#303133;margin-bottom:14px;padding-left:10px;border-left:3px solid #409EFF}
+
+        /* 统计数字 */
+        .stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px}
+        .stat-box{background:#fff;border-radius:10px;padding:18px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,0.05)}
+        .stat-icon{font-size:28px;margin-bottom:6px}
+        .stat-val{font-size:26px;font-weight:bold;color:#409EFF}
+        .stat-lbl{font-size:12px;color:#909399;margin-top:4px}
+
+        /* 排行表 */
+        .rank-row{display:flex;align-items:center;padding:11px 16px;border-bottom:1px solid #f0f0f0;transition:background 0.2s}
+        .rank-row:hover{background:#fafafa}
+        .rank-num{width:44px;font-weight:bold}
+        .rank-name{width:100px;font-weight:600;color:#303133}
+        .rank-id{width:80px;color:#909399;font-size:12px}
+        .rank-score{width:70px;font-weight:bold;color:#409EFF}
+        .rank-trend span{padding:3px 10px;border-radius:10px;font-size:11px;font-weight:bold}
+        .trend-up{background:#f0f9eb;color:#67c23a}
+        .trend-down{background:#fef0f0;color:#f56c6c}
+        .trend-flat{background:#f4f4f5;color:#909399}
+    </style>
+</head>
+<body>
+<div id="app" class="app">
+    <!-- ====== 侧边栏 ====== -->
+    <div class="sidebar">
+        <div class="logo">
+            <h2>🎓 智能教学平台</h2>
+            <p>教师工作台</p>
+        </div>
+
+        <div class="nav-section">
+            <div class="nav-label">核心功能</div>
+            <div class="nav-item" :class="{active:currentTab==='review'}" @click="currentTab='review'">
+                <span class="nav-icon">🤖</span><span class="nav-text">AI 批改作业</span>
+            </div>
+            <div class="nav-item" :class="{active:currentTab==='assignments'}" @click="currentTab='assignments'">
+                <span class="nav-icon">📝</span><span class="nav-text">作业管理</span>
+            </div>
+            <div class="nav-item" :class="{active:currentTab==='analytics'}" @click="currentTab='analytics'">
+                <span class="nav-icon">📊</span><span class="nav-text">数据分析</span>
+            </div>
+
+            <div class="nav-label">人员管理</div>
+            <div class="nav-item" :class="{active:currentTab==='students'}" @click="currentTab='students'">
+                <span class="nav-icon">👨‍🎓</span><span class="nav-text">学生管理</span>
+            </div>
+            <div class="nav-item" :class="{active:currentTab==='teachers'}" @click="currentTab='teachers'">
+                <span class="nav-icon">👨‍🏫</span><span class="nav-text">教师信息</span>
+            </div>
+        </div>
+
+        <div class="sidebar-footer">
+            <div class="logout-btn" @click="handleLogout">
+                🚪 退出登录
+            </div>
+        </div>
+    </div>
+
+    <!-- ====== 主内容 ====== -->
+    <div class="main">
+        <div class="topbar">
+            <div class="topbar-title">{{ tabTitle }}</div>
+            <el-button size="small" icon="el-icon-refresh" @click="refreshAll">刷新数据</el-button>
+        </div>
+
+        <div class="content">
+
+            <!-- ========== TAB 1: AI 批改作业 ========== -->
+            <div v-show="currentTab==='review'">
+                <h3 style="margin-bottom:16px;color:#303133">AI 智能批改（使用Agent模块）</h3>
+
+                <!-- 步骤1: 选择作业和学生 -->
+                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:18px;">
+                    <div>
+                        <label style="display:block;font-weight:600;margin-bottom:6px;font-size:13px;">选择作业：</label>
+                        <el-select v-model="selAid" placeholder="请选择作业" size="medium" style="width:100%" @change="onSelectAssignment">
+                            <el-option v-for="a in assignments" :key="a.id" :label="a.title" :value="a.id"></el-option>
+                        </el-select>
+                    </div>
+                    <div>
+                        <label style="display:block;font-weight:600;margin-bottom:6px;font-size:13px;">选择学生：</label>
+                        <el-select v-model="selStudentId" placeholder="请选择学生" size="medium" style="width:100%" @change="loadStudentSubmission">
+                            <el-option v-for="s in students" :key="s.studentId" :label="s.realName + ' (' + s.studentId + ')'" :value="s.studentId"></el-option>
+                        </el-select>
+                    </div>
+                    <div>
+                        <label style="display:block;font-weight:600;margin-bottom:6px;font-size:13px;">提交状态：</label>
+                        <el-tag :type="studentSubmission ? (studentSubmission.status==='graded'?'success':'warning'):'info'" size="medium">
+                            {{ studentSubmission ? (studentSubmission.status==='graded'?'已批改':'待批改') : '未找到' }}
+                        </el-tag>
+                    </div>
+                </div>
+
+                <!-- 显示作业信息 -->
+                <div v-if="selAssignment" class="card" style="margin-bottom:16px;">
+                    <h4 style="margin-bottom:8px;color:#303133">📋 作业信息</h4>
+                    <div style="font-size:13px;line-height:1.8;color:#606266">
+                        <strong>课程：</strong>{{ selAssignment.courseId }} | 
+                        <strong>总分：</strong>{{ selAssignment.totalScore || 100 }} 分<br>
+                        <strong>要求：</strong>{{ selAssignment.description || '无' }}
+                    </div>
+                </div>
+
+                <!-- 显示学生提交的图片 -->
+                <div v-if="studentImageUrl">
+                    <h4 style="margin-bottom:12px;color:#303133">📷 学生提交的作业图片（{{ selStudentName }}）</h4>
+                    <div style="text-align:center;background:#fafafa;padding:20px;border-radius:10px;border:2px solid #e4e7ed;">
+                        <img :src="studentImageUrl" style="max-width:100%;max-height:450px;border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,0.15);">
+
+                        <div style="margin-top:16px;display:flex;justify-content:center;align-items:center;gap:12px;">
+                            <el-button type="primary" size="large" :loading="reviewing" :disabled="!selAid||!selStudentId||!studentImageUrl" @click="doReviewWithAgent" icon="el-icon-magic-stick">
+                                🤖 开始 AI 智能批改
+                            </el-button>
+                            <span style="color:#909399;font-size:12px;">（将调用 Agent 模块进行深度分析）</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 未找到提交 -->
+                <div v-else-if="selAid && selStudentId" style="text-align:center;padding:50px;background:#fff;border-radius:10px;">
+                    <div style="font-size:48px;margin-bottom:12px;">📭</div>
+                    <p style="color:#909399;font-size:15px;margin-bottom:6px;">该学生尚未提交此作业</p>
+                    <p style="color:#c0c4cc;font-size:13px;">请等待学生提交后再进行批改</p>
+                </div>
+
+                <!-- 提示选择 -->
+                <div v-else style="text-align:center;padding:40px;background:#f5f7fa;border-radius:10px;">
+                    <p style="color:#909399;font-size:14px;">请在上方选择要批改的作业和学生</p>
+                </div>
+
+                <!-- 批改结果 -->
+                <div v-if="reviewResult" class="review-card" style="margin-top:20px;">
+                    <div class="score-big">
+                        <div class="score-num">{{ reviewResult.score }}</div>
+                        <div class="score-sub">分 / {{ selAssignment?.totalScore || 100 }} 分</div>
+                    </div>
+
+                    <!-- 详细反馈 -->
+                    <div class="feedback-box">
+                        <h4 style="margin-bottom:10px;font-size:14px;font-weight:600;color:#303133">AI智能批改报告</h4>
+
+                        <!-- 如果有详细反馈，格式化显示 -->
+                        <div v-if="reviewResult.feedback" style="white-space:pre-line;line-height:1.7;font-size:13px;color:#333;" v-html="formatFeedback(reviewResult.feedback)"></div>
+
+                        <!-- 兼容旧的fbList格式 -->
+                        <template v-else>
+                            <div v-for="(item,i) in fbList" :key="i" class="fb-item">{{ item }}</div>
+                        </template>
+
+                        <!-- 识别内容（折叠显示） -->
+                        <el-collapse v-if="reviewResult.recognizedContent" style="margin-top:12px;">
+                            <el-collapse-item title="图片内容识别（点击展开）">
+                                <p style="color:#666;line-height:1.6;font-size:12px">{{ formatRecognizedContent(reviewResult.recognizedContent) }}</p>
+                            </el-collapse-item>
+                        </el-collapse>
+
+                        <!-- 学习总结（学生可见） -->
+                        <div v-if="reviewResult.learningSummary" style="margin-top:16px;padding:14px;background:#fff9e6;border-left:4px solid #E6A23C;border-radius:6px;">
+                            <h4 style="margin-bottom:10px;color:#E6A23C;font-size:14px;font-weight:600">学习总结与建议</h4>
+                            <div style="white-space:pre-line;line-height:1.7;font-size:13px;color:#555;">
+                                {{ reviewResult.learningSummary }}
+                            </div>
+                        </div>
+
+                        <!-- 警告信息 -->
+                        <div v-if="reviewResult.warning" style="margin-top:12px;padding:10px;background:#fef0f0;border-radius:6px;color:#f56c6c;font-size:12px">
+                            {{ reviewResult.warning }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ========== TAB 2: 作业管理 ========== -->
+            <div v-show="currentTab==='assignments'">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+                    <h3 style="color:#303133">📝 作业列表（{{ assignments.length }}）</h3>
+                    <el-button type="primary" size="small" @click="showNewDlg=true">➕ 新建作业</el-button>
+                </div>
+
+                <div v-loading="loading">
+                    <div v-for="a in assignments" :key="a.id" class="card">
+                        <div class="card-header">
+                            <span class="card-title">{{ a.title }}</span>
+                            <el-tag size="mini" :type="statusType(a.status)">{{ statusText(a.status) }}</el-tag>
+                        </div>
+                        <div class="card-meta">
+                            <span>📚 {{ a.courseId }}</span>
+                            <span>⏰ {{ a.dueDate || '未设截止' }}</span>
+                            <span>📊 {{ a.totalScore || 100 }}分</span>
+                            <span>📈 提交{{ getSubCount(a.id) }}次</span>
+                        </div>
+                        <div class="card-desc">{{ a.description || '暂无描述' }}</div>
+                        <div class="btn-row">
+                            <el-button size="mini" type="primary" @click="goReview(a)">📤 上传批改</el-button>
+                            <el-button size="mini" type="warning" @click="editAssign(a)">✏️ 编辑</el-button>
+                            <el-button size="mini" type="danger" @click="delAssign(a)">删除</el-button>
+                        </div>
+                    </div>
+                    <div v-if="!loading&&!assignments.length" style="text-align:center;padding:50px;color:#c0c4cc">
+                        <div style="font-size:40px;margin-bottom:10px">📝</div>
+                        暂无作业，点击右上角新建
+                    </div>
+                </div>
+            </div>
+
+            <!-- ========== TAB 3: 数据分析 ========== -->
+            <div v-show="currentTab==='analytics'">
+                <!-- 统计卡片 -->
+                <div class="stat-grid">
+                    <div class="stat-box"><div class="stat-icon">👨‍🎓</div><div class="stat-val">{{ stats.students }}</div><div class="stat-lbl">学生总数</div></div>
+                    <div class="stat-box"><div class="stat-icon">📝</div><div class="stat-val">{{ stats.assignments }}</div><div class="stat-lbl">作业总数</div></div>
+                    <div class="stat-box"><div class="stat-icon">✅</div><div class="stat-val">{{ stats.avgScore }}</div><div class="stat-lbl">平均正确率%</div></div>
+                    <div class="stat-box"><div class="stat-icon">📈</div><div class="stat-val" :style="{color:stats.trend>=0?'#67c23a':'#f56c6c'}">{{ stats.trend>0?'+':'' }}{{ stats.trend }}%</div><div class="stat-lbl">整体趋势</div></div>
+                </div>
+
+                <!-- 折线图 -->
+                <div class="chart-card">
+                    <div class="chart-title">📈 学生作业正确率变化趋势（折线图）</div>
+                    <div id="lineChart" style="height:420px"></div>
+                </div>
+
+                <!-- 分布柱状图 -->
+                <div class="chart-card">
+                    <div class="chart-title">📊 各次作业成绩分布对比</div>
+                    <div id="barChart" style="height:320px"></div>
+                </div>
+
+                <!-- 排行榜 -->
+                <div class="chart-card">
+                    <div class="chart-title">🏆 学生正确率排行榜</div>
+                    <div class="rank-row" style="background:#fafafa;font-weight:bold;font-size:12px">
+                        <span class="rank-num">#</span>
+                        <span class="rank-name">姓名</span>
+                        <span class="rank-id">学号</span>
+                        <span class="rank-score">平均分</span>
+                        <span class="rank-score">最高分</span>
+                        <span style="width:55px">次数</span>
+                        <span style="width:65px">趋势</span>
+                        <span style="flex:1;text-align:right">最近5次</span>
+                    </div>
+                    <div v-for="(r,i) in ranking" :key="r.sid" class="rank-row">
+                        <span class="rank-num"><el-tag size="mini" :type="i===0?'danger':i===1?'warning':i===2?'success':'info'">{{i+1}}</el-tag></span>
+                        <span class="rank-name">{{ r.name }}</span>
+                        <span class="rank-id">{{ r.sid }}</span>
+                        <span class="rank-score">{{ r.avg }}</span>
+                        <span class="rank-score" style="color:#67c23a">{{ r.max||'-' }}</span>
+                        <span style="width:55px;color:#909399;font-size:12px">{{ r.cnt }}次</span>
+                        <span class="rank-trend"><span :class="r.t>0?'trend-up':r.t<0?'trend-down':'trend-flat'">{{r.t>0?'↑'+r.t:r.t<0?'↓'+Math.abs(r.t):'→'}}%</span></span>
+                        <span style="flex:1;text-align:right">
+                            <el-tag v-for="(s,j) in (r.recent||[])" :key="j" size="mini" :type="s>=85?'success':s>=70?'':s>=60?'warning':'danger'" style="margin-left:2px">{{s}}</el-tag>
+                        </span>
+                    </div>
+                    <div v-if="!ranking.length" style="text-align:center;padding:36px;color:#c0c4cc">暂无批改数据</div>
+                </div>
+
+                <!-- 学情预警 -->
+                <div class="chart-card" style="background:linear-gradient(135deg,#fff5f5 0%,#ffe8e8 100%);border:2px solid #f56c6c">
+                    <div class="chart-title" style="border-left-color:#f56c6c;color:#f56c6c">⚠️ 学情预警中心</div>
+                    
+                    <!-- 预警统计 -->
+                    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:18px">
+                        <div style="background:#fff;padding:16px;border-radius:8px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,0.06)">
+                            <div style="font-size:28px;font-weight:bold;color:#f56c6c">{{ warnings.length }}</div>
+                            <div style="font-size:12px;color:#909399;margin-top:4px">预警总数</div>
+                        </div>
+                        <div style="background:#fff;padding:16px;border-radius:8px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,0.06)">
+                            <div style="font-size:28px;font-weight:bold;color:#e6a23c">{{ warnings.filter(w=>w.type==='score_decline').length }}</div>
+                            <div style="font-size:12px;color:#909399;margin-top:4px">成绩下滑</div>
+                        </div>
+                        <div style="background:#fff;padding:16px;border-radius:8px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,0.06)">
+                            <div style="font-size:28px;font-weight:bold;color:#909399">{{ warnings.filter(w=>w.type==='no_submit').length }}</div>
+                            <div style="font-size:12px;color:#909399;margin-top:4px">缺交作业</div>
+                        </div>
+                    </div>
+
+                    <!-- 预警列表 -->
+                    <div v-if="warnings.length" style="background:#fff;border-radius:10px;padding:16px;max-height:400px;overflow-y:auto">
+                        <div v-for="(warning,i) in warnings" :key="i" style="display:flex;align-items:flex-start;padding:14px;margin-bottom:10px;background:#fef0f0;border-radius:8px;border-left:4px solid #f56c6c">
+                            <div style="font-size:24px;margin-right:12px">{{ warning.type==='score_decline'?'📉':warning.type==='low_score'?'❌':'📭' }}</div>
+                            <div style="flex:1">
+                                <div style="font-weight:600;font-size:14px;color:#303133;margin-bottom:4px">
+                                    {{ warning.studentName }}（{{ warning.studentId }}）
+                                </div>
+                                <div style="font-size:13px;color:#606266;line-height:1.6">
+                                    {{ warning.message }}
+                                </div>
+                                <div style="margin-top:8px;display:flex;gap:8px;align-items:center">
+                                    <el-tag size="mini" type="danger" effect="plain">{{ warning.level==='high'?'高危':warning.level==='medium'?'中等':'轻微' }}</el-tag>
+                                    <el-tag size="mini" type="warning" effect="plain">{{ warning.suggestion }}</el-tag>
+                                    <el-button size="mini" type="danger" icon="el-icon-delete" circle @click="deleteWarning(i)" style="margin-left:auto" title="删除预警"></el-button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div v-else style="text-align:center;padding:40px;background:#fff;border-radius:10px">
+                        <div style="font-size:48px;margin-bottom:12px">✅</div>
+                        <p style="color:#67c23a;font-size:15px;font-weight:600">暂无学情预警</p>
+                        <p style="color:#909399;font-size:13px;margin-top:6px">所有学生学习状态良好！</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ========== TAB 4: 学生管理 ========== -->
+            <div v-show="currentTab==='students'">
+                <h3 style="margin-bottom:16px;color:#303133">👨‍🎓 学生信息列表</h3>
+                <div v-loading="loading" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px">
+                    <div v-for="s in students" :key="s.id" class="card">
+                        <div class="card-title">{{ s.realName }}</div>
+                        <div class="card-meta" style="flex-direction:column;gap:6px">
+                            <span>🎓 学号：{{ s.studentId }}</span>
+                            <span>📧 {{ s.email||'暂无邮箱' }}</span>
+                            <span>📱 {{ s.phone||'暂无电话' }}</span>
+                            <span>🏫 班级：{{ s.classes||'未分配' }}</span>
+                        </div>
+                        <div class="btn-row">
+                            <el-button size="mini" type="primary" @click="editStudent(s)">编辑</el-button>
+                            <el-button size="mini" type="danger" @click="delStudent(s)">删除</el-button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ========== TAB 5: 教师信息 ========== -->
+            <div v-show="currentTab==='teachers'">
+                <h3 style="margin-bottom:16px;color:#303133">👨‍🏫 教师信息列表</h3>
+                <div v-loading="loading" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px">
+                    <div v-for="t in teachers" :key="t.id" class="card">
+                        <div class="card-title">{{ t.realName }}</div>
+                        <div class="card-meta" style="flex-direction:column;gap:6px">
+                            <span>🆔 工号：{{ t.teacherId }}</span>
+                            <span>📧 {{ t.email||'暂无邮箱' }}</span>
+                            <span>📱 {{ t.phone||'暂无电话' }}</span>
+                            <span>🏛️ 院系：{{ t.department||'未分配' }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div><!-- /content -->
+
+        <!-- 新建/编辑作业对话框 -->
+        <el-dialog :title="editingId ? '编辑作业' : '新建作业'" :visible.sync="showNewDlg" width="520px">
+            <el-form :model="af" label-width="70px">
+                <el-form-item label="标题" required><el-input v-model="af.title" placeholder="如：第三章练习题"></el-input></el-form-item>
+                <el-form-item label="课程ID" required><el-input v-model="af.courseId" placeholder="如：CS101"></el-input></el-form-item>
+                <el-form-item label="截止时间"><el-date-picker v-model="af.dueDate" type="datetime" value-format="yyyy-MM-dd HH:mm:ss" style="width:100%"></el-date-picker></el-form-item>
+                <el-form-item label="总分"><el-input-number v-model="af.totalScore" :min="1" :max="200"></el-input-number></el-form-item>
+                <el-form-item label="要求"><el-input v-model="af.description" type="textarea" :rows="4" placeholder="描述作业要求..."></el-input></el-form-item>
+            </el-form>
+            <template #footer>
+                <el-button @click="showNewDlg=false">取消</el-button>
+                <el-button type="primary" @click="saveAssign" :loading="creating">{{ editingId ? '保存' : '创建' }}</el-button>
+            </template>
+        </el-dialog>
+    </div><!-- /main -->
+</div>
+
+<script src="https://unpkg.com/vue@2"></script>
+<script src="https://unpkg.com/element-ui/lib/index.js"></script>
+<script>
+new Vue({
+    el:'#app',
+    data(){
+        return {
+            currentTab:'review',
+
+            // 批改相关
+            selAid:null,
+            previewUrl:'',
+            reviewing:false,
+            reviewResult:null,
+
+            // 学生提交相关（Agent批改用）
+            selStudentId:null,
+            studentSubmission:null,
+            studentImageUrl:'',
+
+            // 列表
+            assignments:[],
+            submissions:[],
+            students:[],
+            teachers:[],
+            loading:false,
+
+            // 新建/编辑作业
+            showNewDlg:false,
+            creating:false,
+            editingId:null,
+            af:{title:'',courseId:'',dueDate:'',totalScore:100,description:''},
+
+            // 图表实例
+            lc:null,bc:null,
+
+            // 分析统计
+            stats:{students:0,assignments:0,avgScore:0,trend:0},
+            ranking:[],
+            warnings:[],  // 学情预警列表
+            deletedWarnings:[],  // 已删除的预警ID列表（用于持久化）
+        }
+    },
+    computed:{
+        tabTitle(){
+            return {review:'AI 批改作业',assignments:'作业管理',analytics:'数据分析',students:'学生管理',teachers:'教师信息'}[this.currentTab]
+        },
+        selAssignment(){ return this.assignments.find(a=>a.id===this.selAid) },
+        selStudentName(){
+            const s=this.students.find(st=>st.studentId===this.selStudentId)
+            return s?s.realName:'未知学生'
+        },
+        fbList(){
+            if(!this.reviewResult||!this.reviewResult.feedback) return []
+            return this.reviewResult.feedback.split('\n').filter(s=>s.trim())
+        }
+    },
+    created(){
+        this.loadAll()
+        // 从localStorage加载已删除的预警记录
+        const saved = localStorage.getItem('deletedWarnings')
+        if (saved) {
+            try {
+                this.deletedWarnings = JSON.parse(saved)
+            } catch (e) {
+                this.deletedWarnings = []
+            }
+        }
+    },
+    mounted(){
+        this.lc=echarts.init(document.getElementById('lineChart'))
+        this.bc=echarts.init(document.getElementById('barChart'))
+        window.addEventListener('resize',()=>{this.lc.resize();this.bc.resize()})
+    },
+    watch:{
+        currentTab(v){ if(v==='analytics'){ this.$nextTick(()=>this.renderCharts()) } }
+    },
+    methods:{
+        handleLogout(){
+            this.$confirm('确定要退出登录吗？','提示',{
+                confirmButtonText: '确定',
+                cancelButtonText: '取消',
+                type: 'warning'
+            }).then(() => {
+                // 清除本地存储的用户信息
+                localStorage.removeItem('currentUser')
+                sessionStorage.removeItem('currentUser')
+                
+                // 跳转到登录页
+                window.location.href = '/'
+            }).catch(() => {
+                // 用户取消退出
+                console.log('取消退出登录')
+            })
+        },
+
+        // 格式化AI反馈内容（纯答案比对模式）
+        formatFeedback(feedback) {
+            if (!feedback) return ''
+            
+            // 尝试解析JSON格式
+            if (feedback.includes('{') && feedback.includes('}')) {
+                try {
+                    const jsonMatch = feedback.match(/\{[\s\S]*\}/)
+                    if (jsonMatch) {
+                        const jsonObj = JSON.parse(jsonMatch[0])
+                        
+                        let html = ''
+                        
+                        // 新格式：questions 数组
+                        if (jsonObj.questions && Array.isArray(jsonObj.questions)) {
+                            html += '<div style="margin-bottom:12px">'
+                            jsonObj.questions.forEach((q, idx) => {
+                                const isCorrect = q.is_correct === true
+                                const color = isCorrect ? '#67c23a' : '#F56C6C'
+                                const bg = isCorrect ? '#f0f9eb' : '#fef0f0'
+                                
+                                html += `<div style="margin-bottom:8px;padding:10px;background:${bg};border-radius:6px;border-left:4px solid ${color}">
+                                    <strong>第${q.num || (idx+1)}题</strong>
+                                    <span style="float:right;color:${color};font-weight:bold">${isCorrect ? '✓ 正确' : '✗ 错误'} (${q.score || 0}分)</span>`
+                                
+                                if (q.question) {
+                                    html += `<div style="margin-top:5px;color:#606266;font-size:12px">题目: ${q.question}</div>`
+                                }
+                                if (q.student_answer) {
+                                    html += `<div style="margin-top:3px;color:#909399;font-size:12px">学生答案: ${q.student_answer}</div>`
+                                }
+                                if (q.correct_answer) {
+                                    html += `<div style="margin-top:3px;color:#409EFF;font-size:12px">正确答案: ${q.correct_answer}</div>`
+                                }
+                                if (!isCorrect && q.reason) {
+                                    html += `<div style="margin-top:5px;color:#F56C6C;font-size:12px">错误原因: ${q.reason}</div>`
+                                }
+                                
+                                // 错题举一反三（重点！）
+                                if (!isCorrect && (q.knowledge_point || q.similar_question || q.solution_guide)) {
+                                    html += '<div style="margin-top:10px;padding:10px;background:#fff;border:2px dashed #E6A23C;border-radius:6px">'
+                                    
+                                    if (q.knowledge_point) {
+                                        html += `<div style="color:#E6A23C;font-weight:600;margin-bottom:5px">
+                                            知识点: ${q.knowledge_point}
+                                        </div>`
+                                    }
+                                    
+                                    if (q.similar_question) {
+                                        html += `<div style="background:#fdf6ec;padding:8px;border-radius:4px;margin:8px 0">
+                                            <div style="color:#E6A23C;font-weight:600;font-size:12px;margin-bottom:5px">
+                                                推荐练习题:
+                                            </div>
+                                            <div style="color:#303133;line-height:1.6">${q.similar_question}</div>
+                                        </div>`
+                                    }
+                                    
+                                    if (q.solution_guide) {
+                                        html += `<div style="background:#ecf5ff;padding:8px;border-radius:4px">
+                                            <div style="color:#409EFF;font-weight:600;font-size:12px;margin-bottom:5px">
+                                                解题思路:
+                                            </div>
+                                            <div style="color:#606266;line-height:1.6">${q.solution_guide}</div>
+                                        </div>`
+                                    }
+                                    
+                                    html += '</div>'
+                                }
+                                
+                                html += '</div>'
+                            })
+                            html += '</div>'
+                        }
+                        
+                        // 错题总结
+                        if (jsonObj.error_summary) {
+                            html += `<div style="margin-top:16px;padding:14px;background:#fef0f0;border-left:4px solid #F56C6C;border-radius:6px">
+                                <h4 style="margin-bottom:8px;color:#F56C6C;font-size:14px;font-weight:600">错题总结与学习建议</h4>
+                                <div style="line-height:1.7;color:#606266;font-size:13px">${jsonObj.error_summary}</div>
+                            </div>`
+                        }
+                        
+                        // 总结
+                        if (jsonObj.summary) {
+                            html += `<div style="padding:12px;background:#f5f7fa;border-radius:6px;color:#303133;font-weight:600">
+                                ${jsonObj.summary}
+                            </div>`
+                        }
+                        
+                        // 旧格式兼容：detailed_analysis
+                        if (jsonObj.detailed_analysis && Array.isArray(jsonObj.detailed_analysis)) {
+                            html += '<div style="margin-bottom:12px">'
+                            jsonObj.detailed_analysis.forEach((q, idx) => {
+                                const isCorrect = q.is_correct === true || q.isCorrect === true
+                                const color = isCorrect ? '#67c23a' : '#F56C6C'
+                                
+                                html += `<div style="margin-bottom:8px;padding:8px;background:${isCorrect ? '#f0f9eb' : '#fef0f0'};border-radius:4px;border-left:3px solid ${color}">
+                                    <strong>第${q.question_number || (idx+1)}题</strong> - 
+                                    <span style="color:${color};font-weight:600">${isCorrect ? '正确' : '错误'}</span>
+                                    ${q.score != null ? ` (${q.score}分)` : ''}
+                                    ${!isCorrect && q.error_analysis ? `<br><span style="color:#909399;font-size:12px">原因: ${q.error_analysis}</span>` : ''}
+                                </div>`
+                            })
+                            html += '</div>'
+                        }
+                        
+                        if (html) return html
+                    }
+                } catch (e) {}
+            }
+            
+            // 纯文本处理：只保留核心信息
+            let text = feedback
+            
+            // 删除所有关于字迹、格式的废话
+            const uselessPhrases = [
+                /字迹[是否工整潦草清晰][，。！？]*/g,
+                /书写[是否规范整洁][，。！？]*/g,
+                /格式[是否规范标准][，。！？]*/g,
+                /建议.*注意书写/g,
+                /建议.*注意格式/g,
+                /建议.*注意字迹/g,
+                /卷面.*整洁/g,
+                /书写.*认真/g,
+                /整体.*工整/g,
+            ]
+            
+            uselessPhrases.forEach(regex => {
+                text = text.replace(regex, '')
+            })
+            
+            // 去除emoji
+            text = text.replace(/[📋📝🔍🎯🤖⚠️❌✅💡📊📈🌟👍✏️📝]/g, '')
+            text = text.replace(/\*\*/g, '')
+            
+            return text
+        },
+
+        formatRecognizedContent(content) {
+            if (!content) return ''
+            if ((content.startsWith('{') || content.startsWith('"')) && content.length > 500) {
+                return content.substring(0, 500) + '\n\n... (内容过长，已省略)'
+            }
+            return content.replace(/[📋📝🔍🎯🤖⚠️❌✅💡📊📈🌟👍]/g, '')
+        },
+
+        async loadAll(){
+            this.loading=true
+            try{
+                const[r1,r2,r3,r4]=await Promise.all([
+                    fetch('/api/assignments'),fetch('/api/submissions'),
+                    fetch('/api/students'),fetch('/api/teachers')
+                ])
+                this.assignments=(await r1.json())||[]
+                this.submissions=(await r2.json())||[]
+                this.students=(await r3.json())||[]
+                this.teachers=(await r4.json())||[]
+                this.calcStats()
+                if(this.currentTab==='analytics') this.$nextTick(()=>this.renderCharts())
+            }catch(e){console.error(e)}finally{this.loading=false}
+        },
+        refreshAll(){ this.loadAll(); this.$message.success('已刷新') },
+
+        // ---- 批改 ----
+        onFileChange(e){ const f=e.target.files[0];if(f)this.readImg(f) },
+        onDrop(e){ const f=e.dataTransfer.files[0];if(f&&f.type.startsWith('image/'))this.readImg(f) },
+        readImg(file){
+            this.previewUrl=URL.createObjectURL(file)
+            this.reviewResult=null
+        },
+        clearImg(){ this.previewUrl='';this.reviewResult=null;this.$refs.fileInput.value='' },
+
+        // Agent模块批改相关方法
+        onSelectAssignment(){
+            this.studentSubmission=null
+            this.studentImageUrl=''
+            if(this.selStudentId){
+                this.loadStudentSubmission()
+            }
+        },
+
+        async loadStudentSubmission(){
+            if(!this.selAid||!this.selStudentId){
+                this.studentSubmission=null
+                this.studentImageUrl=''
+                return
+            }
+
+            try{
+                // 获取选中作业的正确assignmentId
+                const selectedAssignment=this.assignments.find(a=>a.id===this.selAid)
+                const queryAssignmentId=selectedAssignment?selectedAssignment.assignmentId:String(this.selAid)
+
+                console.log('查询学生提交:', {
+                    studentId: this.selStudentId,
+                    assignmentId: queryAssignmentId,
+                    selAid: this.selAid
+                })
+
+                // 方式1：使用assignmentId查询
+                let res=await fetch(`/api/submissions/student/${this.selStudentId}/assignment/${queryAssignmentId}`)
+                let data=null
+
+                if(res.ok){
+                    data=await res.json()
+                    console.log('方式1查询结果:', data)
+                }
+
+                // 如果方式1没找到，尝试用数字ID查询
+                if(!data||!data.id){
+                    console.log('方式1未找到，尝试方式2...')
+                    res=await fetch(`/api/submissions/student/${this.selStudentId}/assignment/${this.selAid}`)
+                    if(res.ok){
+                        data=await res.json()
+                        console.log('方式2查询结果:', data)
+                    }
+                }
+
+                // 如果还没找到，尝试从所有提交中筛选
+                if(!data||!data.id){
+                    console.log('方式2未找到，尝试方式3...')
+                    res=await fetch(`/api/submissions/student/${this.selStudentId}`)
+                    if(res.ok){
+                        const allSubmissions=await res.json()
+                        console.log('该学生所有提交:', allSubmissions)
+
+                        // 查找匹配的提交（通过assignment_id或数字ID）
+                        data=allSubmissions.find(s =>
+                            s.assignmentId===queryAssignmentId ||
+                            s.assignmentId===String(this.selAid) ||
+                            String(s.assignmentId)===String(this.selAid)
+                        )
+                        console.log('方式3筛选结果:', data)
+                    }
+                }
+
+                if(data&&data.id){
+                        this.studentSubmission=data
+                        // 使用imageUrl显示图片
+                        this.studentImageUrl=data.imageUrl||''
+
+                        console.log('找到学生提交:', {
+                            id: data.id,
+                            hasImage: !!this.studentImageUrl,
+                            imageUrl: data.imageUrl
+                        })
+
+                        if(data.status==='graded'){
+                            this.reviewResult={
+                                score:data.score,
+                                feedback:data.feedback,
+                                recognizedContent:data.imageAnalysis,
+                                learningSummary:data.learningSummary,  // 学习总结
+                                submission:data
+                            }
+                            this.$message.info(`该学生已批改，得分：${data.score}分`)
+                        }else{
+                            this.reviewResult=null
+                            if(this.studentImageUrl){
+                                this.$message.success(`已加载学生提交的作业图片`)
+                            }else{
+                                this.$message.warning('找到提交记录，但图片数据为空')
+                            }
+                        }
+                    }else{
+                    this.studentSubmission=null
+                    this.studentImageUrl=''
+                    console.log('未找到任何提交记录')
+                }
+            }catch(e){
+                console.error('加载学生提交失败:',e)
+                this.studentSubmission=null
+                this.studentImageUrl=''
+                this.$message.error('加载学生提交失败：'+e.message)
+            }
+        },
+
+        async doReviewWithAgent(){
+            if(!this.selAid){this.$message.warning('请选择作业');return}
+            if(!this.selStudentId){this.$message.warning('请选择学生');return}
+            if(!this.studentImageUrl){this.$message.warning('该学生尚未提交作业');return}
+
+            this.reviewing=true
+            this.$message.info('🤖 正在调用 Agent 模块进行智能分析...')
+
+            try{
+                const assignmentInfo=this.selAssignment?`${this.selAssignment.title}\n课程：${this.selAssignment.courseId}\n要求：${this.selAssignment.description||'无'}`:''
+
+                // 使用filePath（从submission对象获取）
+                const filePath=this.studentSubmission?this.studentSubmission.filePath:null
+
+                const res=await fetch(`/api/assignments/${this.selAid}/review-image`,{
+                    method:'POST',
+                    headers:{'Content-Type':'application/json'},
+                    body:JSON.stringify({
+                        studentId:this.selStudentId,
+                        filePath:filePath,
+                        assignmentInfo:assignmentInfo
+                    })
+                })
+
+                const d=await res.json()
+
+                if(d.success){
+                    this.reviewResult=d
+                    this.$message.success(`✅ AI智能批改完成！得分：${d.score}分`)
+
+                    // 刷新数据
+                    await this.loadAll()
+                    // 重新加载当前学生的提交状态
+                    await this.loadStudentSubmission()
+                }else{
+                    this.$message.error(d.message||'批改失败')
+                }
+            }catch(e){
+                console.error('Agent批改错误:',e)
+                this.$message.error('批改过程出错：'+e.message)
+            }finally{
+                this.reviewing=false
+            }
+        },
+        goReview(a){ this.selAid=a.id;this.currentTab='review' },
+
+        // ---- 作业CRUD ----
+        statusText(s){return{draft:'草稿',published:'已发布',closed:'已截止'}[s]||s},
+        statusType(s){return{draft:'info',published:'success',closed:'danger'}[s]||'info'},
+        getSubCount(aid){
+            // 多种方式匹配assignmentId（兼容不同格式）
+            return this.submissions.filter(s => {
+                const sId = String(s.assignmentId || '')
+                const targetId = String(aid)
+                // 方式1：直接匹配
+                if (sId === targetId) return true
+                // 方式2：匹配assignment对象的id
+                const assignment = this.assignments.find(a => a.id === Number(targetId))
+                if (assignment && sId === String(assignment.assignmentId)) return true
+                // 方式3：反向查找
+                if (this.assignments.find(a => a.assignmentId === sId && a.id === Number(targetId))) return true
+                return false
+            }).length
+        },
+        
+        // 删除提交记录
+        async deleteSubmission(submission) {
+            try {
+                await this.$confirm('确定要删除这条提交记录吗？', '提示', {
+                    type: 'warning'
+                })
+                
+                const res = await fetch(`/api/submissions/${submission.id}`, { method: 'DELETE' })
+                if (res.ok) {
+                    this.$message.success('删除成功')
+                    await this.loadAll()
+                    this.renderCharts()
+                } else {
+                    this.$message.error('删除失败')
+                }
+            } catch (e) {
+                console.error(e)
+            }
+        },
+        createAssign(){
+            this.editingId=null
+            this.af={title:'',courseId:'',dueDate:'',totalScore:100,description:''}
+            this.showNewDlg=true
+        },
+        editAssign(a){
+            this.editingId=a.id
+            Object.assign(this.af,{
+                title:a.title||'',
+                courseId:a.courseId||'',
+                dueDate:a.dueDate||'',
+                totalScore:a.totalScore||100,
+                description:a.description||''
+            })
+            this.showNewDlg=true
+        },
+        saveAssign(){
+            if(!this.af.title||!this.af.courseId){
+                this.$message.warning('请填写必填项')
+                return
+            }
+            this.creating=true
+
+            const url=this.editingId?`/api/assignments/${this.editingId}`:'/api/assignments'
+            const method=this.editingId?'PUT':'POST'
+
+            fetch(url,{method,headers:{'Content-Type':'application/json'},body:JSON.stringify(this.af)})
+            .then(()=>{
+                this.$message.success(this.editingId?'已保存':'已创建')
+                this.showNewDlg=false
+                this.af={title:'',courseId:'',dueDate:'',totalScore:100,description:''}
+                this.editingId=null
+                this.loadAll()
+            })
+            .catch(()=>this.$message.error('操作失败'))
+            .finally(()=>this.creating=false)
+        },
+        delAssign(a){
+            this.$confirm('确定删除？','',{type:'warning'}).then(()=>{
+                fetch(`/api/assignments/${a.id}`,{method:'DELETE'}).then(()=>{this.$message.success('已删');this.loadAll()})
+            })
+        },
+
+        // ---- 学生CRUD ----
+        editStudent(s){
+            this.$prompt('修改班级','编辑学生',{inputValue:s.classes||'',inputPlaceholder:'输入新班级'}).then(({value})=>{
+                fetch(`/api/students/${s.id}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({...s,classes:value})})
+                .then(()=>{this.$message.success('已修改');this.loadAll()})
+            }).catch(()=>{})
+        },
+        delStudent(s){
+            this.$confirm('确定删除该学生？','',{type:'warning'}).then(()=>{
+                fetch(`/api/students/${s.id}`,{method:'DELETE'}).then(()=>{this.$message.success('已删');this.loadAll()})
+            })
+        },
+        deleteWarning(index){
+            const warning = this.warnings[index]
+            this.$confirm('确定删除该预警记录？','提示',{type:'warning',confirmButtonText:'确定',cancelButtonText:'取消'}).then(()=>{
+                // 从数组中删除
+                this.warnings.splice(index, 1)
+                // 添加到已删除列表并持久化
+                if (warning && warning.id) {
+                    this.deletedWarnings.push(warning.id)
+                    localStorage.setItem('deletedWarnings', JSON.stringify(this.deletedWarnings))
+                    console.log('✅ 预警已删除并持久化保存:', warning.id)
+                    console.log('📋 当前已删除的预警列表:', this.deletedWarnings)
+                }
+                this.$message.success('预警已删除（刷新后仍保持删除状态）')
+            }).catch(()=>{})
+        },
+
+        // ---- 数据分析 ----
+        calcStats(){
+            const g=this.submissions.filter(s=>s.score!=null&&s.score!=='')
+            this.stats={students:this.students.length,assignments:this.assignments.length,avgScore:g.length?(g.reduce((a,b)=>a+Number(b.score),0)/g.length).toFixed(1):0,trend:0}
+            if(g.length>=4){
+                const m=Math.floor(g.length/2)
+                const a1=g.slice(0,m).reduce((a,i)=>a+Number(i.score),0)/m
+                const a2=g.slice(m).reduce((a,i)=>a+Number(i.score),0)/g.slice(m).length
+                this.stats.trend=(a2-a1).toFixed(1)
+            }
+
+            // 排行榜
+            const map={}
+            g.forEach(s=>{
+                if(!map[s.studentId]) map[s.studentId]={scores:[]}
+                map[s.studentId].scores.push(Number(s.score))
+            })
+            this.ranking=Object.entries(map).map(([sid,d])=>{
+                const st=this.students.find(s=>s.studentId===sid)||{}
+                const sc=[...d.scores]
+                let tr=0
+                if(sc.length>=4){const m2=Math.floor(sc.length/2);tr=((sc.slice(m2).reduce((a,b)=>a+b,0)/sc.slice(m2).length)-(sc.slice(0,m2).reduce((a,b)=>a+b,0)/m2)).toFixed(1)}
+                return{sid,name:st.realName||sid,avg:(sc.reduce((a,b)=>a+b,0)/sc.length).toFixed(1),max:Math.max(...sc),cnt:sc.length,trend:Number(tr),recent:sc.slice(-5)}
+            }).sort((a,b)=>Number(b.avg)-Number(a.avg))
+
+            // 学情预警分析
+            this.analyzeWarnings()
+        },
+
+        analyzeWarnings(){
+            this.warnings=[]
+
+            this.students.forEach(student => {
+                const studentSubmissions = this.submissions.filter(s => s.studentId === student.studentId && s.score != null)
+
+                // 1. 成绩下滑预警（最近3次平均分比前3次低10分以上）
+                if (studentSubmissions.length >= 6) {
+                    const recent3 = studentSubmissions.slice(-3).map(s => Number(s.score))
+                    const prev3 = studentSubmissions.slice(-6, -3).map(s => Number(s.score))
+
+                    const recentAvg = recent3.reduce((a, b) => a + b, 0) / 3
+                    const prevAvg = prev3.reduce((a, b) => a + b, 0) / 3
+
+                    if (prevAvg - recentAvg >= 10) {
+                        const warningId = `${student.studentId}_score_decline`
+                        if (!this.deletedWarnings.includes(warningId)) {
+                            this.warnings.push({
+                                id: warningId,
+                                type: 'score_decline',
+                                level: prevAvg - recentAvg >= 20 ? 'high' : 'medium',
+                                studentName: student.realName,
+                                studentId: student.studentId,
+                                message: `成绩明显下滑！前3次均分${prevAvg.toFixed(1)}分 → 最近3次${recentAvg.toFixed(1)}分（下降${(prevAvg-recentAvg).toFixed(1)}分）`,
+                                suggestion: '需要关注'
+                            })
+                        }
+                    }
+                }
+
+                // 2. 低分预警（有作业低于60分）
+                const lowScores = studentSubmissions.filter(s => Number(s.score) < 60)
+                if (lowScores.length > 0) {
+                    const latestLow = lowScores[lowScores.length - 1]
+                    const warningId = `${student.studentId}_low_score`
+                    if (!this.deletedWarnings.includes(warningId)) {
+                        this.warnings.push({
+                            id: warningId,
+                            type: 'low_score',
+                            level: latestLow.score < 40 ? 'high' : 'medium',
+                            studentName: student.realName,
+                            studentId: student.studentId,
+                            message: `存在不及格作业！最近一次仅得${latestLow.score}分`,
+                            suggestion: '需辅导'
+                        })
+                    }
+                }
+
+                // 3. 缺交作业预警
+                const submittedAssignmentIds = new Set(studentSubmissions.map(s => String(s.assignmentId)))
+                const unsubmittedAssignments = this.assignments.filter(a => !submittedAssignmentIds.has(String(a.id)) && !submittedAssignmentIds.has(a.assignmentId))
+
+                if (unsubmittedAssignments.length > 0) {
+                    const warningId = `${student.studentId}_no_submit`
+                    if (!this.deletedWarnings.includes(warningId)) {
+                        this.warnings.push({
+                            id: warningId,
+                            type: 'no_submit',
+                            level: unsubmittedAssignments.length >= 2 ? 'high' : 'medium',
+                            studentName: student.realName,
+                            studentId: student.studentId,
+                            message: `缺交${unsubmittedAssignments.length}次作业：${unsubmittedAssignments.map(a => a.title || `作业${a.id}`).join('、')}`,
+                            suggestion: '请督促'
+                        })
+                    }
+                }
+
+                // 4. 连续低分预警（连续2次低于70分）
+                if (studentSubmissions.length >= 2) {
+                    const lastTwo = studentSubmissions.slice(-2)
+                    if (Number(lastTwo[0].score) < 70 && Number(lastTwo[1].score) < 70) {
+                        const warningId = `${student.studentId}_continuous_low`
+                        if (!this.deletedWarnings.includes(warningId)) {
+                            this.warnings.push({
+                                id: warningId,
+                                type: 'continuous_low',
+                                level: 'medium',
+                                studentName: student.realName,
+                                studentId: student.studentId,
+                                message: `连续2次作业低于70分（${lastTwo[0].score}分、${lastTwo[1].score}分）`,
+                                suggestion: '建议谈话'
+                            })
+                        }
+                    }
+                }
+            })
+
+            // 按严重程度排序：高危 > 中等 > 轻微
+            this.warnings.sort((a, b) => {
+                const levelOrder = { high: 0, medium: 1, low: 2 }
+                return levelOrder[a.level] - levelOrder[b.level]
+            })
+        },
+
+        renderCharts(){
+            if(!this.lc||!this.bc)return
+
+            // 优化数据匹配逻辑：支持多种assignmentId格式
+            const findSubmission = (studentId, assignmentId) => {
+                return this.submissions.find(s => {
+                    const sAssignmentId = String(s.assignmentId || '')
+                    const targetId = String(assignmentId)
+                    return s.studentId === studentId && (
+                        sAssignmentId === targetId ||
+                        sAssignmentId === String(this.assignments.find(a => a.id === Number(targetId))?.assignmentId) ||
+                        sAssignmentId === this.assignments.find(a => a.id === Number(assignmentId))?.assignmentId
+                    )
+                })
+            }
+
+            const getScore = (studentId, assignmentId) => {
+                const sub = findSubmission(studentId, assignmentId)
+                return (sub && sub.score != null && sub.score !== '') ? Number(sub.score) : null
+            }
+
+            // 折线图
+            const sortedAs=[...this.assignments].sort((a,b)=>new Date(a.createdAt||0)-new Date(b.createdAt||0))
+            const xData=sortedAs.map(a=>a.title||`作业${a.id}`)
+            const colors=['#409EFF','#67C23A','#E6A23C','#F56C6C','#909399','#00CED1']
+            let ci=0
+            const series=[]
+            this.students.forEach(st=>{
+                const scores=sortedAs.map(a=>getScore(st.studentId, a.id))
+                if(scores.some(s=>s!=null)){
+                    series.push({
+                        name:st.realName,
+                        type:'line',
+                        smooth:true,
+                        data:scores,
+                        connectNulls:false,
+                        lineStyle:{width:2},
+                        itemStyle:{color:colors[ci++%colors.length]},
+                        markPoint:{
+                            data:[
+                                {type:'max', name:'最高分'},
+                                {type:'min', name:'最低分'}
+                            ]
+                        }
+                    })
+                }
+            })
+
+            // 如果没有数据，显示提示信息
+            if(series.length===0){
+                this.lc.setOption({
+                    title:{
+                        text:'暂无数据',
+                        left:'center',
+                        top:'center',
+                        textStyle:{fontSize:16,color:'#909399'}
+                    }
+                })
+            }else{
+                this.lc.setOption({
+                    tooltip:{
+                        trigger:'axis',
+                        formatter: function(params){
+                            let result = params[0].axisValue + '<br/>'
+                            params.forEach(item => {
+                                if(item.value != null){
+                                    result += `${item.marker} ${item.seriesName}: <b>${item.value}</b>分<br/>`
+                                }else{
+                                    result += `${item.marker} ${item.seriesName}: <span style="color:#999">未提交</span><br/>`
+                                }
+                            })
+                            return result
+                        }
+                    },
+                    legend:{
+                        bottom:0,
+                        type:'scroll',
+                        data:series.map(s=>s.name)
+                    },
+                    grid:{left:'3%',right:'4%',bottom:'12%',top:'8%',containLabel:true},
+                    xAxis:{
+                        type:'category',
+                        data:xData,
+                        axisLabel:{rotate:25,fontSize:11}
+                    },
+                    yAxis:{
+                        type:'value',
+                        name:'分数',
+                        min:0,
+                        max:100,
+                        interval:20
+                    },
+                    series
+                },true)
+            }
+
+            // 柱状图 - 成绩分布
+            const ranges=['<60','60-69','70-79','80-89','90-100']
+            const barSeries=ranges.map(r=>({name:r,type:'bar',stack:'total',data:[],itemStyle:{}}))
+            
+            sortedAs.forEach(a=>{
+                const subs=this.submissions.filter(s=>{
+                    const sAssignmentId = String(s.assignmentId || '')
+                    return (sAssignmentId === String(a.id) || 
+                           sAssignmentId === a.assignmentId || 
+                           sAssignmentId === String(this.assignments.find(asgn => asgn.id === a.id)?.assignmentId)) &&
+                           s.score != null && s.score !== ''
+                })
+                
+                const c=[0,0,0,0,0]
+                subs.forEach(s=>{
+                    const sc=Number(s.score)
+                    if(sc<60)c[0]++
+                    else if(sc<70)c[1]++
+                    else if(sc<80)c[2]++
+                    else if(sc<90)c[3]++
+                    else c[4]++
+                })
+                
+                barSeries.forEach((s,i)=>{
+                    s.data.push(c[i])
+                })
+            })
+
+            const barColors=['#f56c6c','#e6a23c','#409EFF','#67c23a','#67c23a']
+            
+            if(sortedAs.length===0 || barSeries.every(s=>s.data.every(d=>d===0))){
+                this.bc.setOption({
+                    title:{
+                        text:'暂无数据',
+                        left:'center',
+                        top:'center',
+                        textStyle:{fontSize:16,color:'#909399'}
+                    }
+                })
+            }else{
+                this.bc.setOption({
+                    tooltip:{
+                        trigger:'axis',
+                        axisPointer:{type:'shadow'},
+                        formatter:function(params){
+                            let total=0
+                            params.forEach(p=>{if(typeof p.value==='number')total+=p.value})
+                            let result=params[0].axisValue+`<br/><b>总计: ${total}人</b><br/>`
+                            params.forEach(p=>{
+                                if(p.value>0){
+                                    result+=`${p.marker}${p.seriesName}: ${p.value}人 (${total>0?(p.value/total*100).toFixed(1):0}%)<br/>`
+                                }
+                            })
+                            return result
+                        }
+                    },
+                    legend:{bottom:0},
+                    grid:{left:'3%',right:'4%',bottom:'12%',top:'5%',containLabel:true},
+                    xAxis:{
+                        type:'category',
+                        data:sortedAs.map(a=>a.title||`作业${a.id}`),
+                        axisLabel:{rotate:25,fontSize:11}
+                    },
+                    yAxis:{
+                        type:'value',
+                        name:'人数'
+                    },
+                    series:barSeries.map((s,i)=>({...s,itemStyle:{color:barColors[i]}}))
+                },true)
+            }
+        }
+    }
+})
+</script>
+</body>
+</html>

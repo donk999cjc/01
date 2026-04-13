@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/students")
@@ -17,22 +18,15 @@ public class StudentController {
     @Autowired
     private StudentService studentService;
 
-    @PostMapping
-    public ResponseEntity<Student> createStudent(@RequestBody Student student) {
-        Student createdStudent = studentService.createStudent(student);
-        return new ResponseEntity<>(createdStudent, HttpStatus.CREATED);
+    @GetMapping
+    public ResponseEntity<List<Student>> getAllStudents() {
+        List<Student> students = studentService.getAllStudents();
+        return new ResponseEntity<>(students, HttpStatus.OK);
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<Student> getStudentById(@PathVariable Long id) {
-        return studentService.getStudentById(id)
-                .map(student -> new ResponseEntity<>(student, HttpStatus.OK))
-                .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
-    }
-
-    @GetMapping("/studentId/{studentId}")
-    public ResponseEntity<Student> getStudentByStudentId(@PathVariable String studentId) {
-        Student student = studentService.getStudentByStudentId(studentId);
+        Student student = studentService.getStudentById(id);
         if (student != null) {
             return new ResponseEntity<>(student, HttpStatus.OK);
         } else {
@@ -40,16 +34,10 @@ public class StudentController {
         }
     }
 
-    @GetMapping("/course/{courseId}")
-    public ResponseEntity<List<Student>> getStudentsByCourseId(@PathVariable String courseId) {
-        List<Student> students = studentService.getStudentsByCourseId(courseId);
-        return new ResponseEntity<>(students, HttpStatus.OK);
-    }
-
-    @GetMapping
-    public ResponseEntity<List<Student>> getAllStudents() {
-        List<Student> students = studentService.getAllStudents();
-        return new ResponseEntity<>(students, HttpStatus.OK);
+    @PostMapping
+    public ResponseEntity<Student> createStudent(@RequestBody Student student) {
+        Student createdStudent = studentService.createStudent(student);
+        return new ResponseEntity<>(createdStudent, HttpStatus.CREATED);
     }
 
     @PutMapping("/{id}")

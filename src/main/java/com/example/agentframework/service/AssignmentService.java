@@ -15,6 +15,11 @@ public class AssignmentService {
     private AssignmentMapper assignmentMapper;
 
     public Assignment createAssignment(Assignment assignment) {
+        // 自动生成assignmentId（如果为空）
+        if (assignment.getAssignmentId() == null || assignment.getAssignmentId().isEmpty()) {
+            String assignmentId = "A" + System.currentTimeMillis();
+            assignment.setAssignmentId(assignmentId);
+        }
         assignmentMapper.insert(assignment);
         return assignment;
     }
@@ -39,11 +44,23 @@ public class AssignmentService {
     public Assignment updateAssignment(Long id, Assignment assignment) {
         Assignment existingAssignment = assignmentMapper.findById(id);
         if (existingAssignment != null) {
-            existingAssignment.setAssignmentId(assignment.getAssignmentId());
-            existingAssignment.setCourseId(assignment.getCourseId());
-            existingAssignment.setTitle(assignment.getTitle());
-            existingAssignment.setContent(assignment.getContent());
-            existingAssignment.setDeadline(assignment.getDeadline());
+            // 保留原有的assignment_id（除非明确提供新值）
+            if (assignment.getAssignmentId() == null || assignment.getAssignmentId().isEmpty()) {
+                // 不设置，让update SQL跳过此字段
+            }
+            if (assignment.getCourseId() != null) {
+                existingAssignment.setCourseId(assignment.getCourseId());
+            }
+            if (assignment.getTitle() != null) {
+                existingAssignment.setTitle(assignment.getTitle());
+            }
+            if (assignment.getContent() != null) {
+                existingAssignment.setContent(assignment.getContent());
+            }
+            if (assignment.getDeadline() != null) {
+                existingAssignment.setDeadline(assignment.getDeadline());
+            }
+            // 使用existingAssignment更新，保留原有assignmentId
             assignmentMapper.update(existingAssignment);
             return existingAssignment;
         }
