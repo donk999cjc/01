@@ -1,0 +1,409 @@
+/**
+ * 教师端页面样式
+ * 文件：css/teacher.css
+ * 描述：教师工作台的完整样式定义
+ */
+
+/* ==================== 基础重置 ==================== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Microsoft YaHei', Arial, sans-serif;
+    background: #f5f7fa;
+}
+
+/* ==================== 应用容器 ==================== */
+.app {
+    display: flex;
+    height: 100vh;
+}
+
+/* ==================== 侧边栏样式 ==================== */
+.sidebar {
+    width: 220px;
+    background: linear-gradient(180deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+}
+
+.logo {
+    padding: 25px 20px;
+    text-align: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.logo h2 {
+    font-size: 16px;
+    font-weight: bold;
+}
+
+.logo p {
+    font-size: 11px;
+    opacity: 0.6;
+    margin-top: 4px;
+}
+
+.nav-section {
+    padding: 15px 0;
+}
+
+.nav-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 8px 20px;
+    color: rgba(255, 255, 255, 0.4);
+}
+
+.nav-item {
+    display: flex;
+    align-items: center;
+    padding: 12px 22px;
+    cursor: pointer;
+    transition: all 0.2s;
+    border-left: 3px solid transparent;
+    color: rgba(255, 255, 255, 0.75);
+}
+
+.nav-item:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
+}
+
+.nav-item.active {
+    background: rgba(64, 158, 255, 0.15);
+    border-left-color: #409EFF;
+    color: #fff;
+}
+
+.nav-icon {
+    font-size: 18px;
+    width: 28px;
+    text-align: center;
+    margin-right: 10px;
+}
+
+.nav-text {
+    font-size: 14px;
+}
+
+.sidebar-footer {
+    margin-top: auto;
+    padding: 18px 22px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.logout-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    background: rgba(244, 67, 54, 0.2);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 13px;
+}
+
+.logout-btn:hover {
+    background: rgba(244, 67, 54, 0.35);
+}
+
+/* ==================== 主内容区域 ==================== */
+.main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.topbar {
+    height: 56px;
+    background: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 30px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+    flex-shrink: 0;
+}
+
+.topbar-title {
+    font-size: 17px;
+    font-weight: 600;
+    color: #303133;
+}
+
+.content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px;
+}
+
+/* ==================== Tab切换组件 ==================== */
+.tab-bar {
+    display: flex;
+    gap: 0;
+    margin-bottom: 20px;
+    background: #fff;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.tab-btn {
+    flex: 1;
+    padding: 14px 20px;
+    text-align: center;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    color: #606266;
+    transition: all 0.2s;
+    border-bottom: 3px solid transparent;
+}
+
+.tab-btn:hover {
+    color: #409EFF;
+    background: #f5f7fa;
+}
+
+.tab-btn.active {
+    color: #409EFF;
+    border-bottom-color: #409EFF;
+    background: #ecf5ff;
+}
+
+/* ==================== 上传区域 ==================== */
+.upload-zone {
+    border: 2px dashed #dcdfe6;
+    border-radius: 12px;
+    padding: 45px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s;
+    background: #fafafa;
+}
+
+.upload-zone:hover {
+    border-color: #409EFF;
+    background: #f0f7ff;
+}
+
+.upload-zone.has-img {
+    border-color: #67c23a;
+    border-style: solid;
+}
+
+.preview-img {
+    max-width: 100%;
+    max-height: 280px;
+    border-radius: 8px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+}
+
+/* ==================== 批改结果卡片 ==================== */
+.review-card {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    border-radius: 14px;
+    padding: 28px;
+    color: #fff;
+    margin-top: 18px;
+}
+
+.score-big {
+    text-align: center;
+    margin-bottom: 16px;
+}
+
+.score-num {
+    font-size: 58px;
+    font-weight: bold;
+    line-height: 1;
+}
+
+.score-sub {
+    font-size: 14px;
+    opacity: 0.85;
+}
+
+.feedback-box {
+    background: rgba(255, 255, 255, 0.96);
+    border-radius: 10px;
+    padding: 18px;
+    color: #333;
+}
+
+.fb-item {
+    position: relative;
+    padding-left: 20px;
+    margin-bottom: 10px;
+    line-height: 1.7;
+    font-size: 13px;
+}
+
+.fb-item::before {
+    content: '✓';
+    position: absolute;
+    left: 0;
+    color: #67c23a;
+    font-weight: bold;
+}
+
+/* ==================== 作业卡片 ==================== */
+.card {
+    background: #fff;
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 14px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.card-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: #303133;
+}
+
+.card-meta {
+    display: flex;
+    gap: 18px;
+    font-size: 12px;
+    color: #909399;
+    margin-bottom: 10px;
+}
+
+.card-desc {
+    font-size: 13px;
+    color: #606266;
+    margin-bottom: 12px;
+    line-height: 1.6;
+}
+
+.btn-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+/* ==================== 图表区域 ==================== */
+.chart-card {
+    background: #fff;
+    border-radius: 10px;
+    padding: 22px;
+    margin-bottom: 18px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.chart-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: #303133;
+    margin-bottom: 14px;
+    padding-left: 10px;
+    border-left: 3px solid #409EFF;
+}
+
+/* ==================== 统计数字 ==================== */
+.stat-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    margin-bottom: 18px;
+}
+
+.stat-box {
+    background: #fff;
+    border-radius: 10px;
+    padding: 18px;
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.stat-icon {
+    font-size: 28px;
+    margin-bottom: 6px;
+}
+
+.stat-val {
+    font-size: 26px;
+    font-weight: bold;
+    color: #409EFF;
+}
+
+.stat-lbl {
+    font-size: 12px;
+    color: #909399;
+    margin-top: 4px;
+}
+
+/* ==================== 排行表 ==================== */
+.rank-row {
+    display: flex;
+    align-items: center;
+    padding: 11px 16px;
+    border-bottom: 1px solid #f0f0f0;
+    transition: background 0.2s;
+}
+
+.rank-row:hover {
+    background: #fafafa;
+}
+
+.rank-num {
+    width: 44px;
+    font-weight: bold;
+}
+
+.rank-name {
+    width: 100px;
+    font-weight: 600;
+    color: #303133;
+}
+
+.rank-id {
+    width: 80px;
+    color: #909399;
+    font-size: 12px;
+}
+
+.rank-score {
+    width: 70px;
+    font-weight: bold;
+    color: #409EFF;
+}
+
+.rank-trend span {
+    padding: 3px 10px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: bold;
+}
+
+.trend-up {
+    background: #f0f9eb;
+    color: #67c23a;
+}
+
+.trend-down {
+    background: #fef0f0;
+    color: #f56c6c;
+}
+
+.trend-flat {
+    background: #f4f4f5;
+    color: #909399;
+}
