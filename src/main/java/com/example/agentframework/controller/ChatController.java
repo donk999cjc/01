@@ -2,11 +2,16 @@ package com.example.agentframework.controller;
 
 import com.example.agentframework.service.AIService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 @RestController
 @RequestMapping("/api/ai")
@@ -16,9 +21,8 @@ public class ChatController {
     @Autowired
     private AIService aiService;
 
-    /**
-     * AI聊天接口 - 供学生端使用
-     */
+    private final ExecutorService executor = Executors.newCachedThreadPool();
+
     @PostMapping("/chat")
     public ResponseEntity<Map<String, Object>> chat(@RequestBody Map<String, String> chatRequest) {
         String message = chatRequest.get("message");
@@ -52,9 +56,39 @@ public class ChatController {
         }
     }
 
-    /**
-     * 检查AI服务状态
-     */
+    @GetMapping(value = "/chat/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public SseEmitter chatStream(@RequestParam String message,
+                                  @RequestParam(required = false) String systemPrompt) {
+        SseEmitter emitter = new SseEmitter(120000L);
+
+        if (systemPrompt == null || systemPrompt.isEmpty()) {
+            systemPrompt = "你是一个专业的AI学习助手，专门帮助学生解答学习相关的问题。请用友好、鼓励的语气回答，用中文回复。";
+        }
+
+        String finalSystemPrompt = systemPrompt;
+        executor.execute(() -> {
+            try {
+                aiService.chatStream(finalSystemPrompt, message, chunk -> {
+                    try {
+                        emitter.send(SseEmitter.event().data(chunk));
+                    } catch (IOException e) {
+                        emitter.completeWithError(e);
+                    }
+                });
+                emitter.send(SseEmitter.event().name("done").data("[DONE]"));
+                emitter.complete();
+            } catch (Exception e) {
+                try {
+                    emitter.send(SseEmitter.event().name("error").data(e.getMessage()));
+                } catch (IOException ignored) {
+                }
+                emitter.completeWithError(e);
+            }
+        });
+
+        return emitter;
+    }
+
     @GetMapping("/status")
     public ResponseEntity<Map<String, Object>> getStatus() {
         Map<String, Object> result = new HashMap<>();

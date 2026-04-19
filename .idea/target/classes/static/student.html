@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>学生端 - 跨课程智能教学平台</title>
+
+    <!-- Element UI CSS -->
+    <link rel="stylesheet" href="lib/element-ui/index.css">
+
+    <!-- 自定义样式 -->
+    <link rel="stylesheet" href="css/student.css">
+</head>
+<body>
+<div id="app" class="app">
+    <!-- 侧边栏 -->
+    <div class="sidebar">
+        <div class="logo">
+            <h2>智能教学平台</h2>
+            <p>学生学习台</p>
+        </div>
+        <div class="nav-section">
+            <div class="nav-label">我的学习</div>
+            <div class="nav-item" :class="{active:currentTab==='assignments'}" @click="switchTab('assignments')">
+                <span class="nav-icon">📚</span><span class="nav-text">作业列表</span>
+            </div>
+            <div class="nav-item" :class="{active:currentTab==='submit'}" @click="switchTab('submit')">
+                <span class="nav-icon">📤</span><span class="nav-text">提交作业</span>
+            </div>
+            <div class="nav-item" :class="{active:currentTab==='results'}" @click="switchTab('results')">
+                <span class="nav-icon">📋</span><span class="nav-text">批改结果</span>
+            </div>
+            <div class="nav-item" :class="{active:currentTab==='analysis'}" @click="switchTab('analysis')">
+                <span class="nav-icon">📊</span><span class="nav-text">成绩分析</span>
+            </div>
+
+            <div class="nav-label">互动交流</div>
+            <div class="nav-item" :class="{active:currentTab==='chat'}" @click="switchTab('chat')">
+                <span class="nav-icon">💬</span><span class="nav-text">AI 助手</span>
+            </div>
+
+            <div class="nav-label">账号管理</div>
+            <div class="nav-item" :class="{active:currentTab==='profile'}" @click="switchTab('profile')">
+                <span class="nav-icon">�</span><span class="nav-text">个人信息</span>
+            </div>
+
+            <div class="nav-label">信息查询</div>
+            <div class="nav-item" :class="{active:currentTab==='teachers'}" @click="switchTab('teachers')">
+                <span class="nav-icon">👨‍🏫</span><span class="nav-text">教师信息</span>
+            </div>
+        </div>
+        <div class="sidebar-footer">
+            <div class="logout-btn" @click="handleLogout">退出登录</div>
+        </div>
+    </div>
+
+    <!-- 主内容 -->
+    <div class="main">
+        <div class="topbar">
+            <div class="topbar-title">{{ tabTitle }} - {{ userInfo.realName || '学生' }}</div>
+            <el-button size="small" icon="el-icon-refresh" @click="loadAll">刷新</el-button>
+        </div>
+        <div class="content">
+
+            <!-- TAB 1: 作业列表 -->
+            <div v-show="currentTab==='assignments'">
+                <h3 style="margin-bottom:14px;color:#303133">我的作业列表（{{ assignments.length }}）</h3>
+                <div v-loading="loading">
+                    <div v-for="a in assignments" :key="a.id" class="card">
+                        <div class="card-header">
+                            <span class="card-title">{{ a.title }}</span>
+                            <el-tag size="mini" :type="statusType(a.status)">{{ statusText(a.status) }}</el-tag>
+                        </div>
+                        <div class="card-meta">
+                            <span>课程：{{ a.courseId }}</span>
+                            <span>截止：{{ a.dueDate || '未设' }}</span>
+                            <span>{{ a.totalScore || 100 }}分</span>
+                        </div>
+                        <div class="card-desc">{{ a.description || '暂无描述' }}</div>
+                        <el-button size="small" type="primary" style="margin-top:8px" @click="goSubmit(a)">提交作业</el-button>
+                    </div>
+                    <div v-if="!loading&&!assignments.length" style="text-align:center;padding:50px;color:#c0c4cc"><div style="font-size:36px;margin-bottom:8px">📭</div>暂无作业</div>
+                </div>
+            </div>
+
+            <!-- TAB 2: 提交作业 -->
+            <div v-show="currentTab==='submit'">
+                <h3 style="margin-bottom:14px;color:#303133">提交作业</h3>
+
+                <div class="card">
+                    <label style="display:block;font-weight:600;margin-bottom:8px;font-size:13px;">选择要提交的作业：</label>
+                    <el-select v-model="selAid" placeholder="请选择作业" size="medium" style="width:100%">
+                        <el-option v-for="a in assignments" :key="a.id" :label="a.title + ' (' + a.courseId + ')'" :value="a.id"></el-option>
+                    </el-select>
+                    <div v-if="selAssignment" style="margin-top:10px;padding:12px;background:#f5f7fa;border-radius:6px;font-size:12px;line-height:1.7">
+                        课程：{{ selAssignment.courseId }} | 总分：{{ selAssignment.totalScore||100 }}分 | 截止：{{ selAssignment.dueDate||'未设置' }}
+                    </div>
+                </div>
+
+                <div class="upload-zone" :class="{'has-img':!!selectedFile}" @click="$refs.fileInput.click()" @dragover.prevent @drop.prevent="onDrop">
+                    <input type="file" ref="fileInput" accept="image/*" @change="onFileChange" style="display:none">
+                    <template v-if="!selectedFile">
+                        <div style="font-size:38px;margin-bottom:6px">📷</div>
+                        <div style="color:#606266;font-size:14px">点击或拖拽上传作业图片</div>
+                        <div style="color:#c0c4cc;font-size:12px;margin-top:4px">支持 JPG / PNG</div>
+                    </template>
+                </div>
+
+                <div v-if="selectedFile" style="text-align:center;margin-top:12px;">
+                    <img :src="previewUrl" class="preview-img">
+                    <div style="margin-top:10px;display:flex;gap:8px;justify-content:center;">
+                        <el-button size="small" @click="clearImg">清除</el-button>
+                        <el-button size="small" type="primary" :loading="submitting" :disabled="!selAid||!selectedFile" @click="doSubmit">确认提交</el-button>
+                    </div>
+                </div>
+
+                <div v-if="submitOk" class="result-card" style="margin-top:16px">
+                    <div style="text-align:center;font-size:18px;font-weight:bold">提交成功！</div>
+                    <div style="text-align:center;font-size:13px;opacity:0.85;margin-top:4px">请等待教师使用 AI 批改您的作业</div>
+                </div>
+            </div>
+
+            <!-- TAB 3: 批改结果 -->
+            <div v-show="currentTab==='results'">
+                <h3 style="margin-bottom:14px;color:#303133">我的批改结果（{{ gradedSubmissions.length }}）</h3>
+
+                <div v-loading="loading">
+                    <template v-for="sub in gradedSubmissions">
+                        <div :key="sub.id" class="card">
+                            <div class="card-header">
+                                <span class="card-title">{{ getAssignTitle(sub.assignmentId) }}</span>
+                                <el-tag size="mini" type="success">已批改</el-tag>
+                            </div>
+
+                            <div style="text-align:center;padding:14px 0">
+                                <span style="font-size:42px;font-weight:bold;color:#67c23a">{{ sub.score }}</span>
+                                <span style="font-size:14px;color:#909399;margin-left:4px">/ {{ getAssignTotal(sub.assignmentId) }} 分</span>
+                            </div>
+
+                            <div v-if="sub.imageAnalysis" class="result-card">
+                                <div class="result-fb">
+                                    <h4 style="margin-bottom:8px;font-size:13px">批改反馈</h4>
+                                    <div v-for="(item,i) in splitFeedback(sub.imageAnalysis)" :key="i" class="rfb-item">{{ item }}</div>
+                                </div>
+                            </div>
+
+                            <!-- 学习总结 -->
+                            <div v-if="sub.learningSummary" style="margin-top:12px;padding:14px;background:#fff9e6;border-left:4px solid #E6A23C;border-radius:8px;">
+                                <h4 style="margin-bottom:10px;color:#E6A23C;font-size:14px">📝 学习总结与经验</h4>
+                                <div style="white-space:pre-line;line-height:1.7;font-size:13px;color:#555;">
+                                    {{ sub.learningSummary }}
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+
+                    <div v-if="!loading&&!gradedSubmissions.length" style="text-align:center;padding:50px;color:#c0c4cc">
+                        <div style="font-size:36px;margin-bottom:8px">📝</div>暂无批改结果，请先提交作业
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 4: 成绩分析 -->
+            <div v-show="currentTab==='analysis'">
+                <div class="stat-grid">
+                    <div class="stat-box"><div class="stat-icon">📝</div><div class="stat-val">{{ myStats.total }}</div><div class="stat-lbl">已提交</div></div>
+                    <div class="stat-box"><div class="stat-icon">✅</div><div class="stat-val">{{ myStats.avgScore }}</div><div class="stat-lbl">平均正确率%</div></div>
+                    <div class="stat-box"><div class="stat-icon">🏆</div><div class="stat-val" style="color:#E6A23C">{{ myStats.maxScore||'-' }}</div><div class="stat-lbl">最高分</div></div>
+                </div>
+
+                <div class="chart-card">
+                    <div class="chart-title">我的作业正确率趋势</div>
+                    <div id="myChart" style="height:380px"></div>
+                </div>
+
+                <div class="chart-card">
+                    <div class="chart-title">最近提交记录</div>
+                    <div class="history-row" style="background:#fafafa;font-weight:bold;font-size:12px">
+                        <span style="width:140px">作业名称</span>
+                        <span style="width:70px;text-align:center">分数</span>
+                        <span style="width:80px;text-align:center">状态</span>
+                        <span style="flex:1">时间</span>
+                    </div>
+                    <div v-for="sub in recentSubs" :key="sub.id" class="history-row">
+                        <span style="width:140px;font-weight:500;color:#303133">{{ getAssignTitle(sub.assignmentId) }}</span>
+                        <span style="width:70px;text-align:center;font-weight:bold" :style="{color:sub.score>=85?'#67c23a':sub.score>=60?'#E6A23C':'#F56C6C'}">{{ sub.score||'-' }}</span>
+                        <span style="width:80px;text-align:center">
+                            <el-tag size="mini" :type="sub.status==='graded'?'success':'info'">{{ sub.status==='graded'?'已批改':'待批改' }}</el-tag>
+                        </span>
+                        <span style="flex:1;color:#909399;font-size:12px">{{ sub.submittedAt||'-' }}</span>
+                    </div>
+                    <div v-if="!recentSubs.length" style="text-align:center;padding:28px;color:#c0c4cc">暂无记录</div>
+                </div>
+            </div>
+
+            <!-- TAB 5: AI助手（增强版 CopilotKit 风格） -->
+            <div v-show="currentTab==='chat'" style="height:calc(100vh - 150px)">
+                <div class="chat-container-enhanced">
+                    <div class="chat-toolbar">
+                        <div class="chat-mode-switch">
+                            <button class="mode-btn" :class="{active: chatMode==='normal'}" @click="chatMode='normal'">普通对话</button>
+                            <button class="mode-btn" :class="{active: chatMode==='rag'}" @click="chatMode='rag'">知识库问答</button>
+                        </div>
+                        <div class="chat-status" v-if="chatMode==='rag'">
+                            <span class="status-dot" :class="ragAvailable?'online':'offline'"></span>
+                            <span class="status-text">{{ ragAvailable ? '知识库已连接' : '知识库未连接' }}</span>
+                        </div>
+                        <button class="clear-chat-btn" @click="clearChat" title="清空对话">🗑️</button>
+                    </div>
+                    <div class="chat-messages-enhanced" ref="chatMessages">
+                        <div v-if="chatMessages.length===0" class="chat-welcome">
+                            <div class="welcome-icon">🤖</div>
+                            <h3>AI 学习助手</h3>
+                            <p>我可以帮你解答学习问题、辅导作业、推荐学习资源</p>
+                            <div class="quick-actions">
+                                <button class="quick-btn" @click="quickAsk('帮我解释一下最近学的重要概念')">📖 解释概念</button>
+                                <button class="quick-btn" @click="quickAsk('根据我的学情推荐学习路径')">🗺️ 学习路径</button>
+                                <button class="quick-btn" @click="quickAsk('给我出几道练习题巩固知识')">✏️ 练习题</button>
+                                <button class="quick-btn" @click="quickAsk('分析我的薄弱环节并给出建议')">📊 学情分析</button>
+                            </div>
+                        </div>
+                        <div v-for="(msg,index) in chatMessages" :key="index" class="chat-msg-enhanced" :class="msg.role">
+                            <div class="msg-avatar-enhanced" :class="msg.role">
+                                <span v-if="msg.role==='user'">我</span>
+                                <span v-else>🤖</span>
+                            </div>
+                            <div class="msg-bubble" :class="msg.role">
+                                <div class="msg-text" v-html="renderMarkdown(msg.content)"></div>
+                                <div v-if="msg.sources && msg.sources.length>0" class="msg-sources">
+                                    <div class="sources-label">📚 参考来源：</div>
+                                    <div v-for="(src,si) in msg.sources" :key="si" class="source-item">
+                                        <span class="source-score">{{ (src.score*100).toFixed(0) }}%</span>
+                                        <span class="source-text">{{ src.content }}</span>
+                                    </div>
+                                </div>
+                                <div class="msg-actions">
+                                    <button class="msg-action-btn" @click="copyMessage(msg.content)" title="复制">📋</button>
+                                    <button class="msg-action-btn" @click="regenerate(msg)" v-if="msg.role==='ai'" title="重新生成">🔄</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div v-if="chatLoading" class="chat-msg-enhanced ai">
+                            <div class="msg-avatar-enhanced ai">🤖</div>
+                            <div class="msg-bubble ai">
+                                <div class="typing-indicator">
+                                    <span></span><span></span><span></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="chat-input-area-enhanced">
+                        <div class="input-wrapper">
+                            <textarea class="chat-textarea" v-model="chatInput" placeholder="输入您的问题... (Shift+Enter换行)" @keydown="handleChatKeydown" :disabled="chatLoading" rows="1" ref="chatTextarea"></textarea>
+                            <button class="send-btn-enhanced" @click="sendMessage" :disabled="chatLoading||!chatInput.trim()">
+                                <span v-if="!chatLoading">➤</span>
+                                <span v-else class="spinner"></span>
+                            </button>
+                        </div>
+                        <div class="input-hint">
+                            <span v-if="chatMode==='rag'">🔍 知识库增强模式 - 回答将基于课程知识库</span>
+                            <span v-else>💬 普通对话模式</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 6: 个人信息 -->
+            <div v-show="currentTab==='profile'">
+                <h3 style="margin-bottom:20px;color:#303133">个人信息管理</h3>
+
+                <div class="card profile-form">
+                    <div class="form-item">
+                        <label class="form-label">用户名</label>
+                        <el-input v-model="userInfo.username" disabled></el-input>
+                    </div>
+
+                    <div class="form-item">
+                        <label class="form-label">真实姓名</label>
+                        <el-input v-model="profileForm.realName" placeholder="请输入真实姓名"></el-input>
+                    </div>
+
+                    <div class="form-item">
+                        <label class="form-label">学号</label>
+                        <el-input v-model="userInfo.studentId" disabled></el-input>
+                    </div>
+
+                    <div class="form-item">
+                        <label class="form-label">邮箱</label>
+                        <el-input v-model="profileForm.email" placeholder="请输入邮箱"></el-input>
+                    </div>
+
+                    <div class="form-item">
+                        <label class="form-label">手机号</label>
+                        <el-input v-model="profileForm.phone" placeholder="请输入手机号"></el-input>
+                    </div>
+
+                    <el-button type="primary" @click="saveProfile" style="margin-top:10px">保存修改</el-button>
+                </div>
+
+                <div class="card profile-form" style="margin-top:20px">
+                    <h4 style="margin-bottom:16px;color:#303133">修改密码</h4>
+                    <div class="form-item">
+                        <label class="form-label">当前密码</label>
+                        <el-input v-model="passwordForm.oldPassword" type="password" placeholder="请输入当前密码"></el-input>
+                    </div>
+                    <div class="form-item">
+                        <label class="form-label">新密码</label>
+                        <el-input v-model="passwordForm.newPassword" type="password" placeholder="请输入新密码"></el-input>
+                    </div>
+                    <div class="form-item">
+                        <label class="form-label">确认新密码</label>
+                        <el-input v-model="passwordForm.confirmPassword" type="password" placeholder="请再次输入新密码"></el-input>
+                    </div>
+                    <el-button type="warning" @click="changePassword">修改密码</el-button>
+                </div>
+            </div>
+
+            <!-- TAB 7: 教师信息 -->
+            <div v-show="currentTab==='teachers'">
+                <h3 style="margin-bottom:14px;color:#303133">教师信息</h3>
+                <div v-loading="loading" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px">
+                    <div v-for="t in teachers" :key="t.id" class="card">
+                        <div class="card-title">{{ t.realName }}</div>
+                        <div class="card-meta" style="flex-direction:column;gap:5px">
+                            <span>工号：{{ t.teacherId }}</span>
+                            <span>邮箱：{{ t.email||'暂无' }}</span>
+                            <span>电话：{{ t.phone||'暂无' }}</span>
+                            <span>部门：{{ t.department||'暂无' }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div><!-- /content -->
+    </div><!-- /main -->
+</div>
+
+<!-- 第三方库 -->
+<script src="lib/vue/vue.min.js"></script>
+<script src="lib/element-ui/index.js"></script>
+<script src="lib/echarts/echarts.min.js"></script>
+
+<!-- 业务逻辑 -->
+<script src="js/student.js"></script>
+</body>
+</html>

@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>学生端 - 跨课程智能教学平台</title>
 
-    <!-- Element UI CSS -->
-    <link rel="stylesheet" href="lib/element-ui/index.css">
+    <!-- Element UI CSS (CDN版本，包含字体文件) -->
+    <link rel="stylesheet" href="https://unpkg.com/element-ui@2.15.14/lib/theme-chalk/index.css">
 
     <!-- 自定义样式 -->
     <link rel="stylesheet" href="css/student.css">
@@ -16,8 +16,11 @@
     <!-- 侧边栏 -->
     <div class="sidebar">
         <div class="logo">
-            <h2>智能教学平台</h2>
-            <p>学生学习台</p>
+            <div class="ai-logo-container">
+                <img src="https://images.unsplash.com/photo-1677442136019-21780ecad995?w=150&h=150&fit=crop" alt="AI Logo" class="ai-logo-img" />
+            </div>
+            <h2>🎓 智能教学平台</h2>
+            <p>AI Agent 架构平台</p>
         </div>
         <div class="nav-section">
             <div class="nav-label">我的学习</div>
@@ -58,7 +61,13 @@
     <div class="main">
         <div class="topbar">
             <div class="topbar-title">{{ tabTitle }} - {{ userInfo.realName || '学生' }}</div>
-            <el-button size="small" icon="el-icon-refresh" @click="loadAll">刷新</el-button>
+            <button class="refresh-btn" @click="loadAll" :class="{ 'rotating': refreshing }">
+                <svg viewBox="0 0 24 24" width="18" height="18">
+                    <path d="M12,4V2A10,10 0 0,0 4.34,6.88L5.76,8.3A8,8 0 0,1 12,4M17.66,6.88L19.08,5.46A10,10 0 0,0 12,2V4C14.65,4 16.95,5.49 18.24,7.75L17.66,6.88M19.93,11C19.44,15.16 16,18.5 12,18.5C9.35,18.5 7.05,17.01 5.76,14.75L6.34,15.62L4.92,17.04A10,10 0 0,0 12,20V22A12,12 0 0,1 1,11H3C3.06,13.87 4.28,16.45 6.24,18.29L4.82,19.71A11.97,11.97 0 0,1 1,11H3M21,11C20.94,8.13 19.72,5.55 17.76,3.71L19.18,2.29A11.97,11.97 0 0,0 23,11H21Z"
+                          fill="currentColor"/>
+                </svg>
+                刷新
+            </button>
         </div>
         <div class="content">
 
@@ -94,6 +103,92 @@
                     </el-select>
                     <div v-if="selAssignment" style="margin-top:10px;padding:12px;background:#f5f7fa;border-radius:6px;font-size:12px;line-height:1.7">
                         课程：{{ selAssignment.courseId }} | 总分：{{ selAssignment.totalScore||100 }}分 | 截止：{{ selAssignment.dueDate||'未设置' }}
+                        <br><strong>要求：</strong>{{ selAssignment.description || '无特殊要求' }}
+                    </div>
+
+                    <!-- 📎 教师上传的作业附件查看区域（增强版） -->
+                    <div v-if="selAssignment && hasAttachment(selAssignment)" class="attachment-section">
+                        <div class="attachment-header">
+                            <svg viewBox="0 0 24 24" width="20" height="20">
+                                <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20M10,19L12,15H9V10H15V15H12L14,19H10Z"
+                                      fill="#409EFF"/>
+                            </svg>
+                            <span class="attachment-title">教师发布的作业附件</span>
+                            <el-tag size="mini" type="info">{{ getFileType(selAssignment) }}</el-tag>
+                        </div>
+
+                        <!-- 图片类型：直接预览 -->
+                        <div v-if="isImageFile(selAssignment)" class="attachment-preview-image">
+                            <img :src="getAttachmentUrl(selAssignment)"
+                                 @click="openFullPreview(selAssignment)"
+                                 :alt="selAssignment.fileName || '作业附件'"
+                                 class="preview-thumbnail"
+                                 loading="lazy"/>
+                            <div class="preview-overlay" @click="openFullPreview(selAssignment)">
+                                <span class="overlay-icon">🔍</span>
+                                <span class="overlay-text">点击放大查看</span>
+                            </div>
+                        </div>
+
+                        <!-- PDF/文档类型：卡片展示 -->
+                        <div v-else class="attachment-card-file">
+                            <div class="file-icon-wrapper" :class="'type-' + getFileExtension(selAssignment)">
+                                <svg v-if="isPDF(selAssignment)" viewBox="0 0 24 24" width="48" height="48">
+                                    <path d="M20,2H8C6.89,2 6,2.89 6,4V16C6,17.11 6.89,18 8,18H20C21.11,18 22,17.11 22,16V4C22,2.89 21.11,2 20,2M20,16H8V4H13V9H20V16M10.5,11C9.67,11 9,10.33 9,9.5C9,8.67 9.67,8 10.5,8C11.33,8 12,8.67 12,9.5C12,10.33 11.33,11 10.5,11M13.25,14L10,14L10,13L13.25,13C14.35,13 15.25,12.1 15.25,11C15.25,9.9 14.35,9 13.25,9H10V8H13.25C14.93,8 16.25,9.32 16.25,11C16.25,12.68 14.93,14 13.25,14Z"
+                                          fill="#F56C6C"/>
+                                </svg>
+                                <svg v-else-if="isWord(selAssignment)" viewBox="0 0 24 24" width="48" height="48">
+                                    <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20M12,12H7V14H12V17H14V14H17V12H14V9H12V12Z"
+                                          fill="#409EFF"/>
+                                </svg>
+                                <svg v-else viewBox="0 0 24 24" width="48" height="48">
+                                    <path d="M13,9H18.5L13,3.5V9M6,2H14L20,8V20A2,2 0 0,1 18,22H6C4.89,22 4,21.1 4,20V4C4,2.89 4.89,2 6,2M15,18V16H6V18H15M18,14H6V15H18V14M12,11H6V13H12V11Z"
+                                          fill="#909399"/>
+                                </svg>
+                            </div>
+                            <div class="file-info">
+                                <div class="file-name">{{ selAssignment.fileName || getAttachmentName(selAssignment) }}</div>
+                                <div class="file-meta">
+                                    <span class="file-size">{{ getFileSizeText(selAssignment) }}</span>
+                                    <span class="file-type">{{ getFileTypeDetail(selAssignment) }}</span>
+                                </div>
+                                <div class="file-description">
+                                    教师提供的作业要求或参考材料，请仔细阅读后再完成作业
+                                </div>
+                            </div>
+                            <div class="file-actions">
+                                <button class="action-btn preview-btn" @click="previewAttachment(selAssignment)" title="在线预览">
+                                    <svg viewBox="0 0 24 24" width="18" height="18">
+                                        <path d="M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9M12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17M12,4.5C7,4.5 2.73,7.61 1,12C2.73,16.39 7,19.5 12,19.5C17,19.5 21.27,16.39 23,12C21.27,7.61 17,4.5 12,4.5Z"
+                                              fill="#409EFF"/>
+                                    </svg>
+                                    预览
+                                </button>
+                                <button class="action-btn download-btn" @click="downloadAttachment(selAssignment)" title="下载文件">
+                                    <svg viewBox="0 0 24 24" width="18" height="18">
+                                        <path d="M5,20H19V18H5M19,9H15V3H9V9H5L12,16L19,9Z"
+                                              fill="#67C23A"/>
+                                    </svg>
+                                    下载
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- 操作提示 -->
+                        <div class="attachment-tip">
+                            <span class="tip-icon">💡</span>
+                            <span class="tip-text">建议先下载或预览附件，了解作业要求后再上传你的答案</span>
+                        </div>
+                    </div>
+
+                    <!-- 无附件提示 -->
+                    <div v-if="selAssignment && !hasAttachment(selAssignment)" class="no-attachment-hint">
+                        <svg viewBox="0 0 24 24" width="40" height="40">
+                            <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20M8,12H16V14H8V12M8,16H16V18H8V16Z"
+                                  fill="#c0c4cc"/>
+                        </svg>
+                        <p>该作业暂无附件</p>
+                        <span>直接按照要求完成并上传即可</span>
                     </div>
                 </div>
 
@@ -137,18 +232,52 @@
                                 <span style="font-size:14px;color:#909399;margin-left:4px">/ {{ getAssignTotal(sub.assignmentId) }} 分</span>
                             </div>
 
+                            <!-- 智能解析反馈（解决JSON显示问题） -->
                             <div v-if="sub.imageAnalysis" class="result-card">
                                 <div class="result-fb">
-                                    <h4 style="margin-bottom:8px;font-size:13px">批改反馈</h4>
-                                    <div v-for="(item,i) in splitFeedback(sub.imageAnalysis)" :key="i" class="rfb-item">{{ item }}</div>
+                                    <h4 style="margin-bottom:8px;font-size:13px">📝 AI智能批改报告</h4>
+                                    <div class="feedback-content" v-html="parseFeedback(sub.imageAnalysis)"></div>
+                                </div>
+                            </div>
+
+                            <!-- 错题分析模块（新增） -->
+                            <div v-if="sub.score && sub.score < 80" class="error-analysis-card">
+                                <h4 style="margin-bottom:12px;color:#F56C6C;font-size:14px">🔍 错题深度分析</h4>
+                                <div class="error-list" v-html="analyzeErrors(sub)"></div>
+
+                                <!-- 巩固练习按钮 -->
+                                <button class="practice-btn" @click="generatePractice(sub)" :disabled="generatingPractice">
+                                    <svg viewBox="0 0 24 24" width="18" height="18">
+                                        <path d="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z" fill="#fff"/>
+                                    </svg>
+                                    {{ generatingPractice ? '生成中...' : '生成巩固练习题' }}
+                                </button>
+                            </div>
+
+                            <!-- 巩固练习展示区（新增） -->
+                            <div v-if="sub.practiceExercises && sub.practiceExercises.length > 0" class="practice-card">
+                                <h4 style="margin-bottom:12px;color:#67C23A;font-size:14px">✏️ 针对性巩固练习</h4>
+                                <div v-for="(exercise, idx) in sub.practiceExercises" :key="idx" class="exercise-item">
+                                    <div class="exercise-number">{{ idx + 1 }}</div>
+                                    <div class="exercise-content">{{ exercise.question }}</div>
+                                    <div class="exercise-difficulty" :class="'level-' + exercise.difficulty">{{ getDifficultyText(exercise.difficulty) }}</div>
+                                    <details class="exercise-answer">
+                                        <summary>查看答案与解析</summary>
+                                        <div class="answer-content">
+                                            <strong>答案：</strong>{{ exercise.answer }}<br>
+                                            <strong>解析：</strong>{{ exercise.explanation }}
+                                        </div>
+                                    </details>
+                                </div>
+                                <div style="margin-top:12px;text-align:center;">
+                                    <el-button size="small" type="primary" icon="el-icon-refresh" @click="generatePractice(sub)">换一批题目</el-button>
                                 </div>
                             </div>
 
                             <!-- 学习总结 -->
                             <div v-if="sub.learningSummary" style="margin-top:12px;padding:14px;background:#fff9e6;border-left:4px solid #E6A23C;border-radius:8px;">
                                 <h4 style="margin-bottom:10px;color:#E6A23C;font-size:14px">📝 学习总结与经验</h4>
-                                <div style="white-space:pre-line;line-height:1.7;font-size:13px;color:#555;">
-                                    {{ sub.learningSummary }}
+                                <div style="white-space:pre-line;line-height:1.7;font-size:13px;color:#555;" v-html="formatLearningSummary(sub.learningSummary)">
                                 </div>
                             </div>
                         </div>
@@ -301,15 +430,15 @@
                     <h4 style="margin-bottom:16px;color:#303133">修改密码</h4>
                     <div class="form-item">
                         <label class="form-label">当前密码</label>
-                        <el-input v-model="passwordForm.oldPassword" type="password" placeholder="请输入当前密码"></el-input>
+                        <el-input v-model="passwordForm.oldPassword" type="password" show-password placeholder="请输入当前密码"></el-input>
                     </div>
                     <div class="form-item">
                         <label class="form-label">新密码</label>
-                        <el-input v-model="passwordForm.newPassword" type="password" placeholder="请输入新密码"></el-input>
+                        <el-input v-model="passwordForm.newPassword" type="password" show-password placeholder="请输入新密码"></el-input>
                     </div>
                     <div class="form-item">
                         <label class="form-label">确认新密码</label>
-                        <el-input v-model="passwordForm.confirmPassword" type="password" placeholder="请再次输入新密码"></el-input>
+                        <el-input v-model="passwordForm.confirmPassword" type="password" show-password placeholder="请再次输入新密码"></el-input>
                     </div>
                     <el-button type="warning" @click="changePassword">修改密码</el-button>
                 </div>
@@ -337,7 +466,7 @@
 
 <!-- 第三方库 -->
 <script src="lib/vue/vue.min.js"></script>
-<script src="lib/element-ui/index.js"></script>
+<script src="https://unpkg.com/element-ui@2.15.14/lib/index.js"></script>
 <script src="lib/echarts/echarts.min.js"></script>
 
 <!-- 业务逻辑 -->

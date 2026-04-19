@@ -829,3 +829,580 @@ body {
     margin-top: 6px;
     padding-bottom: 4px;
 }
+
+/* ==================== 刷新按钮（学生端）==================== */
+.refresh-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 18px;
+    background: linear-gradient(135deg, #67C23A 0%, #5daf50 100%);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 12px rgba(103, 194, 58, 0.25);
+}
+
+.refresh-btn:hover {
+    background: linear-gradient(135deg, #76c962 0%, #67C23A 100%);
+    box-shadow: 0 6px 20px rgba(103, 194, 58, 0.35);
+    transform: translateY(-1px);
+}
+
+.refresh-btn:active {
+    transform: translateY(0) scale(0.97);
+}
+
+.refresh-btn svg {
+    transition: transform 0.1s;
+}
+
+.refresh-btn.rotating svg {
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* ==================== AI Logo（学生端）==================== */
+.ai-logo-container {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 12px;
+    border-radius: 20px;
+    overflow: hidden;
+    background: linear-gradient(135deg, #43cea2 0%, #185a9d 50%, #f093fb 100%);
+    padding: 4px;
+    box-shadow: 0 8px 24px rgba(67, 206, 162, 0.35);
+    animation: logo-glow-student 3s ease-in-out infinite alternate;
+}
+
+@keyframes logo-glow-student {
+    from {
+        box-shadow: 0 8px 24px rgba(67, 206, 162, 0.35),
+                    0 0 0 rgba(24, 90, 157, 0);
+    }
+    to {
+        box-shadow: 0 8px 32px rgba(67, 206, 162, 0.55),
+                    0 0 30px rgba(240, 147, 251, 0.3);
+    }
+}
+
+.ai-logo-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 16px;
+}
+
+/* ==================== 智能反馈解析样式 ==================== */
+.feedback-content {
+    line-height: 1.7;
+    font-size: 13px;
+}
+
+.feedback-section {
+    margin-bottom: 14px;
+    padding: 10px 14px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border-left: 3px solid #409EFF;
+}
+
+.feedback-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #409EFF;
+    margin-bottom: 6px;
+}
+
+.feedback-value {
+    color: #303133;
+    font-size: 13px;
+    line-height: 1.7;
+}
+
+.score-value {
+    font-size: 24px !important;
+    font-weight: bold;
+    color: #67C23A !important;
+}
+
+.feedback-list {
+    margin-left: 18px;
+    margin-top: 6px;
+}
+
+.feedback-list li {
+    margin-bottom: 5px;
+    line-height: 1.7;
+    color: #606266;
+}
+
+.raw-feedback {
+    background: #f5f7fa;
+    padding: 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    overflow-x: auto;
+    white-space: pre-wrap;
+    word-break: break-all;
+}
+
+/* ==================== 错题分析卡片样式 ==================== */
+.error-analysis-card {
+    margin-top: 16px;
+    padding: 18px;
+    background: linear-gradient(135deg, #fff5f5 0%, #ffe8e8 100%);
+    border: 2px solid #F56C6C;
+    border-radius: 12px;
+}
+
+.error-list {
+    margin-top: 10px;
+}
+
+.error-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px 12px;
+    margin-bottom: 8px;
+    background: #fff;
+    border-radius: 8px;
+    border-left: 4px solid #F56C6C;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+    transition: all 0.2s;
+}
+
+.error-item:hover {
+    transform: translateX(4px);
+    box-shadow: 0 4px 12px rgba(245, 108, 108, 0.15);
+}
+
+.error-icon {
+    font-size: 18px;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.error-text {
+    flex: 1;
+    font-size: 13px;
+    color: #303133;
+    line-height: 1.6;
+}
+
+/* ==================== 巩固练习按钮 ==================== */
+.practice-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    margin-top: 14px;
+    padding: 12px 20px;
+    background: linear-gradient(135deg, #67C23A 0%, #5daf50 100%);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 12px rgba(103, 194, 58, 0.3);
+}
+
+.practice-btn:hover:not(:disabled) {
+    background: linear-gradient(135deg, #76c962 0%, #67C23A 100%);
+    box-shadow: 0 6px 20px rgba(103, 194, 58, 0.4);
+    transform: translateY(-2px);
+}
+
+.practice-btn:active:not(:disabled) {
+    transform: translateY(0) scale(0.98);
+}
+
+.practice-btn:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+}
+
+/* ==================== 巩固练习展示区 ==================== */
+.practice-card {
+    margin-top: 16px;
+    padding: 20px;
+    background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+    border: 2px solid #67C23A;
+    border-radius: 12px;
+}
+
+.exercise-item {
+    position: relative;
+    padding: 16px 16px 16px 50px;
+    margin-bottom: 14px;
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    border: 1px solid #e4e7ed;
+}
+
+.exercise-item:last-child {
+    margin-bottom: 0;
+}
+
+.exercise-number {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 28px;
+    height: 28px;
+    background: linear-gradient(135deg, #67C23A 0%, #5daf50 100%);
+    color: #fff;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 14px;
+    box-shadow: 0 2px 6px rgba(103, 194, 58, 0.3);
+}
+
+.exercise-content {
+    font-size: 14px;
+    color: #303133;
+    line-height: 1.7;
+    margin-bottom: 10px;
+    font-weight: 500;
+}
+
+.exercise-difficulty {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.level-easy {
+    background: #f0f9eb;
+    color: #67C23A;
+    border: 1px solid #b3e19d;
+}
+
+.level-medium {
+    background: #fdf6ec;
+    color: #E6A23C;
+    border: 1px solid #f5dab1;
+}
+
+.level-hard {
+    background: #fef0f0;
+    color: #F56C6C;
+    border: 1px solid #fbc4c4;
+}
+
+.exercise-answer {
+    margin-top: 10px;
+    padding: 10px 14px;
+    background: #fafafa;
+    border-radius: 8px;
+    border: 1px dashed #dcdfe6;
+}
+
+.exercise-summary {
+    cursor: pointer;
+    font-size: 13px;
+    color: #409EFF;
+    font-weight: 600;
+    outline: none;
+    user-select: none;
+}
+
+.exercise-summary:hover {
+    color: #53a8ff;
+}
+
+.answer-content {
+    margin-top: 10px;
+    padding: 12px;
+    background: #fff;
+    border-radius: 6px;
+    font-size: 13px;
+    line-height: 1.7;
+    color: #606266;
+}
+
+/* ==================== 作业附件查看区域样式 ==================== */
+.attachment-section {
+    margin-top: 16px;
+    padding: 18px;
+    background: linear-gradient(135deg, #ecf5ff 0%, #e6f1ff 100%);
+    border: 2px solid #b3d8ff;
+    border-radius: 12px;
+}
+
+.attachment-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+    padding-bottom: 10px;
+    border-bottom: 2px dashed #b3d8ff;
+}
+
+.attachment-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: #409EFF;
+}
+
+/* 图片预览样式 */
+.attachment-preview-image {
+    position: relative;
+    border-radius: 10px;
+    overflow: hidden;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(64, 158, 255, 0.15);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.attachment-preview-image:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 24px rgba(64, 158, 255, 0.25);
+}
+
+.preview-thumbnail {
+    width: 100%;
+    max-height: 300px;
+    object-fit: contain;
+    display: block;
+    background: #fff;
+    border-radius: 10px;
+}
+
+.preview-overlay {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(64, 158, 255, 0);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: all 0.3s ease;
+}
+
+.attachment-preview-image:hover .preview-overlay {
+    opacity: 1;
+    background: rgba(64, 158, 255, 0.7);
+}
+
+.overlay-icon {
+    font-size: 36px;
+    margin-bottom: 8px;
+    animation: pulse-icon 1s infinite alternate;
+}
+
+.overlay-text {
+    color: #fff;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+@keyframes pulse-icon {
+    from { transform: scale(1); }
+    to { transform: scale(1.15); }
+}
+
+/* 文件卡片样式 */
+.attachment-card-file {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 16px;
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    transition: all 0.25s ease;
+}
+
+.attachment-card-file:hover {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+}
+
+.file-icon-wrapper {
+    flex-shrink: 0;
+    width: 72px;
+    height: 72px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 14px;
+    transition: all 0.3s;
+}
+
+.file-icon-wrapper.type-pdf {
+    background: linear-gradient(135deg, #fef0f0 0%, #fde2e2 100%);
+}
+
+.file-icon-wrapper.type-doc,
+.file-icon-wrapper.type-docx {
+    background: linear-gradient(135deg, #ecf5ff 0%, #d9ecff 100%);
+}
+
+.file-icon-wrapper.type-file {
+    background: linear-gradient(135deg, #f4f4f5 0%, #e9e9eb 100%);
+}
+
+.file-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.file-name {
+    font-size: 15px;
+    font-weight: 600;
+    color: #303133;
+    margin-bottom: 6px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.file-meta {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 8px;
+}
+
+.file-size {
+    font-size: 12px;
+    color: #909399;
+    background: #f4f4f5;
+    padding: 2px 8px;
+    border-radius: 10px;
+}
+
+.file-type {
+    font-size: 12px;
+    color: #409EFF;
+    background: #ecf5ff;
+    padding: 2px 8px;
+    border-radius: 10px;
+}
+
+.file-description {
+    font-size: 12px;
+    color: #909399;
+    line-height: 1.6;
+}
+
+.file-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.action-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 10px 18px;
+    border: none;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    white-space: nowrap;
+}
+
+.preview-btn {
+    background: linear-gradient(135deg, #409EFF 0%, #337ecc 100%);
+    color: #fff;
+    box-shadow: 0 3px 10px rgba(64, 158, 255, 0.3);
+}
+
+.preview-btn:hover {
+    background: linear-gradient(135deg, #53a8ff 0%, #409EFF 100%);
+    box-shadow: 0 5px 16px rgba(64, 158, 255, 0.4);
+    transform: translateY(-2px) scale(1.02);
+}
+
+.download-btn {
+    background: linear-gradient(135deg, #67C23A 0%, #5daf50 100%);
+    color: #fff;
+    box-shadow: 0 3px 10px rgba(103, 194, 58, 0.3);
+}
+
+.download-btn:hover {
+    background: linear-gradient(135deg, #76c962 0%, #67C23A 100%);
+    box-shadow: 0 5px 16px rgba(103, 194, 58, 0.4);
+    transform: translateY(-2px) scale(1.02);
+}
+
+.action-btn:active {
+    transform: translateY(0) scale(0.98);
+}
+
+/* 操作提示 */
+.attachment-tip {
+    margin-top: 14px;
+    padding: 10px 14px;
+    background: #fdf6ec;
+    border-left: 3px solid #E6A23C;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.tip-icon {
+    font-size: 18px;
+    flex-shrink: 0;
+}
+
+.tip-text {
+    font-size: 12px;
+    color: #E6A23C;
+    line-height: 1.6;
+}
+
+/* 无附件提示 */
+.no-attachment-hint {
+    margin-top: 14px;
+    padding: 20px;
+    text-align: center;
+    background: #fafafa;
+    border-radius: 10px;
+    border: 2px dashed #e4e7ed;
+}
+
+.no-attachment-hint svg {
+    margin-bottom: 10px;
+    opacity: 0.5;
+}
+
+.no-attachment-hint p {
+    font-size: 14px;
+    color: #909399;
+    margin: 6px 0;
+    font-weight: 500;
+}
+
+.no-attachment-hint span {
+    font-size: 12px;
+    color: #c0c4cc;
+}

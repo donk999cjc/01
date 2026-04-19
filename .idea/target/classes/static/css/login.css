@@ -1,0 +1,203 @@
+/**
+ * 登录页面样式
+ * 文件：css/login.css
+ * 描述：登录/注册页面的完整样式定义
+ * 作者：教育AI团队
+ */
+
+/* ==================== 基础重置 ==================== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft YaHei', sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* ==================== 登录容器 ==================== */
+.login-container {
+    background: #fff;
+    border-radius: 12px;
+    padding: 40px 45px;
+    width: 420px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+}
+
+/* ==================== Logo区域 ==================== */
+.logo {
+    text-align: center;
+    margin-bottom: 28px;
+}
+
+.logo h1 {
+    font-size: 24px;
+    color: #1a1a1a;
+    margin-bottom: 8px;
+    font-weight: 600;
+}
+
+.logo p {
+    font-size: 14px;
+    color: #666;
+}
+
+/* ==================== 标签切换 ==================== */
+.tabs {
+    display: flex;
+    margin-bottom: 20px;
+    border-bottom: 2px solid #eee;
+}
+
+.tab {
+    flex: 1;
+    padding: 10px;
+    text-align: center;
+    cursor: pointer;
+    font-size: 15px;
+    font-weight: 500;
+    color: #666;
+    transition: all 0.3s;
+}
+
+.tab.active {
+    color: #667eea;
+    border-bottom: 2px solid #667eea;
+    margin-bottom: -2px;
+}
+
+.tab:hover {
+    color: #667eea;
+}
+
+/* ==================== 表单组件 ==================== */
+.form-group {
+    margin-bottom: 18px;
+}
+
+.form-group label {
+    display: block;
+    font-size: 14px;
+    font-weight: 500;
+    color: #333;
+    margin-bottom: 8px;
+}
+
+.form-input {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 15px;
+    transition: border-color 0.3s;
+    outline: none;
+}
+
+.form-input:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+/* ==================== 角色选择 ==================== */
+.role-select {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 18px;
+}
+
+.role-option {
+    flex: 1;
+    padding: 12px;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.role-option.selected {
+    border-color: #667eea;
+    background: #f5f7ff;
+}
+
+.role-option:hover {
+    border-color: #667eea;
+}
+
+.role-icon {
+    font-size: 28px;
+    margin-bottom: 6px;
+}
+
+.role-text {
+    font-size: 13px;
+    font-weight: 500;
+    color: #333;
+}
+
+/* ==================== 按钮样式 ==================== */
+.btn-primary {
+    width: 100%;
+    padding: 13px;
+    background: #667eea;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s;
+    margin-top: 4px;
+}
+
+.btn-primary:hover {
+    background: #5a6fd6;
+}
+
+.btn-primary:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+}
+
+/* ==================== 消息提示 ==================== */
+.error-msg {
+    background: #fef0f0;
+    color: #f56c6c;
+    padding: 10px 14px;
+    border-radius: 6px;
+    font-size: 13px;
+    margin-bottom: 16px;
+    display: none;
+}
+
+.error-msg.show {
+    display: block;
+}
+
+.success-msg {
+    background: #f0f9eb;
+    color: #67c23a;
+    padding: 10px 14px;
+    border-radius: 6px;
+    font-size: 13px;
+    margin-bottom: 16px;
+    display: none;
+}
+
+.success-msg.show {
+    display: block;
+}
+
+/* ==================== 页脚 ==================== */
+.footer {
+    text-align: center;
+    margin-top: 20px;
+    font-size: 12px;
+    color: #aaa;
+}

@@ -30,6 +30,25 @@ public class AnalyticsController {
             return new ResponseEntity<>(result, HttpStatus.BAD_REQUEST);
         }
     }
+    /**
+     * 获取班级作业统计图表数据（真实数据！）
+     */
+    @GetMapping("/class/chart-data/{courseId}")
+    public ResponseEntity<Map<String, Object>> getClassChartData(@PathVariable String courseId) {
+        Map<String, Object> classData = analyticsService.analyzeClassPerformance(courseId);
+
+        // 从班级分析结果里取出图表需要的数据
+        List<String> homeworkNames = (List<String>) classData.get("homeworkNames");
+        List<Double> avgScores = (List<Double>) classData.get("avgScores");
+        List<Double> avgCorrectRates = (List<Double>) classData.get("avgCorrectRates");
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("homeworkNames", homeworkNames);
+        result.put("avgScores", avgScores);
+        result.put("avgCorrectRates", avgCorrectRates);
+
+        return new ResponseEntity<>(result, HttpStatus.OK);
+    }
 
     /**
      * 生成增量练习

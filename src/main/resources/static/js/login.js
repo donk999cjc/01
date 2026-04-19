@@ -48,9 +48,18 @@ function selectRole(role, element) {
 async function doLogin() {
     const username = document.getElementById('username').value.trim();
     const password = document.getElementById('password').value.trim();
+    const captcha = document.getElementById('captcha').value.trim();
 
     if (!username || !password) {
         showError('请输入用户名和密码');
+        return;
+    }
+
+    // 先判断验证码
+    if (!captcha) {
+        showError('请输入验证码');
+        // 刷新验证码
+        document.getElementById('captchaImg').src = '/captcha?t=' + new Date().getTime();
         return;
     }
 
@@ -63,7 +72,7 @@ async function doLogin() {
         const res = await fetch('/api/auth/login', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, password })
+            body: JSON.stringify({ username, password, captcha })
         });
 
         const data = await res.json();

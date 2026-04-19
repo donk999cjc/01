@@ -1,6 +1,7 @@
 D:\trae\java-agent-framework\src\main\java\com\example\agentframework\knowledge\KnowledgeMiddleware.java
 D:\trae\java-agent-framework\src\main\java\com\example\agentframework\service\impl\AnalyticsServiceImpl.java
 D:\trae\java-agent-framework\src\main\java\com\example\agentframework\workflow\agent\TutorAgent.java
+D:\trae\java-agent-framework\src\main\java\com\example\agentframework\controller\CaptchaController.java
 D:\trae\java-agent-framework\src\main\java\com\example\agentframework\service\FileStorageService.java
 D:\trae\java-agent-framework\src\main\java\com\example\agentframework\entity\KnowledgeNode.java
 D:\trae\java-agent-framework\src\main\java\com\example\agentframework\mapper\KnowledgeNodeMapper.java
@@ -17,6 +18,7 @@ D:\trae\java-agent-framework\src\main\java\com\example\agentframework\agent\Agen
 D:\trae\java-agent-framework\src\main\java\com\example\agentframework\controller\KnowledgeNodeController.java
 D:\trae\java-agent-framework\src\main\java\com\example\agentframework\service\impl\AssignmentReviewServiceImpl.java
 D:\trae\java-agent-framework\src\main\java\com\example\agentframework\service\AIService.java
+D:\trae\java-agent-framework\src\main\java\com\example\agentframework\controller\FileUploadController.java
 D:\trae\java-agent-framework\src\main\java\com\example\agentframework\service\FreeImageReviewService.java
 D:\trae\java-agent-framework\src\main\java\com\example\agentframework\controller\ChatController.java
 D:\trae\java-agent-framework\src\main\java\com\example\agentframework\service\AgentService.java
@@ -37,6 +39,7 @@ D:\trae\java-agent-framework\src\main\java\com\example\agentframework\integratio
 D:\trae\java-agent-framework\src\main\java\com\example\agentframework\knowledge\impl\KnowledgeMiddlewareImpl.java
 D:\trae\java-agent-framework\src\main\java\com\example\agentframework\mapper\UserMapper.java
 D:\trae\java-agent-framework\src\main\java\com\example\agentframework\controller\AnalyticsController.java
+D:\trae\java-agent-framework\src\main\java\com\example\agentframework\config\FileConfig.java
 D:\trae\java-agent-framework\src\main\java\com\example\agentframework\entity\Teacher.java
 D:\trae\java-agent-framework\src\main\java\com\example\agentframework\service\impl\UserServiceImpl.java
 D:\trae\java-agent-framework\src\main\java\com\example\agentframework\entity\User.java
@@ -49,6 +52,7 @@ D:\trae\java-agent-framework\src\main\java\com\example\agentframework\service\Kn
 D:\trae\java-agent-framework\src\main\java\com\example\agentframework\mapper\AgentMapper.java
 D:\trae\java-agent-framework\src\main\java\com\example\agentframework\mapper\StudentMasteryMapper.java
 D:\trae\java-agent-framework\src\main\java\com\example\agentframework\service\SubmissionService.java
+D:\trae\java-agent-framework\src\main\java\com\example\agentframework\controller\FileController.java
 D:\trae\java-agent-framework\src\main\java\com\example\agentframework\entity\Submission.java
 D:\trae\java-agent-framework\src\main\java\com\example\agentframework\workflow\WorkflowDefinition.java
 D:\trae\java-agent-framework\src\main\java\com\example\agentframework\engine\IntelligentEngine.java

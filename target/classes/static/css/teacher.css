@@ -407,3 +407,292 @@ body {
     background: #f4f4f5;
     color: #909399;
 }
+
+/* ==================== 点击选择卡片 ==================== */
+.click-select-card {
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    border: 2px solid #e4e7ed;
+    border-radius: 14px;
+    padding: 20px 16px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    position: relative;
+    overflow: hidden;
+}
+
+.click-select-card::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(64, 158, 255, 0.1) 0%, transparent 70%);
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.click-select-card:hover::before {
+    opacity: 1;
+}
+
+.click-select-card:hover {
+    border-color: #409EFF;
+    box-shadow: 0 8px 24px rgba(64, 158, 255, 0.15);
+    transform: translateY(-2px);
+}
+
+.click-select-card:active {
+    transform: translateY(0) scale(0.98);
+}
+
+.click-icon {
+    width: 60px;
+    height: 70px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #ecf5ff 0%, #e6f1ff 100%);
+    border-radius: 12px;
+    transition: all 0.3s;
+    flex-shrink: 0;
+}
+
+.click-select-card:hover .click-icon {
+    background: linear-gradient(135deg, #d9ecff 0%, #c6e2ff 100%);
+    animation: pulse-icon 0.8s ease-in-out infinite alternate;
+}
+
+@keyframes pulse-icon {
+    from { transform: scale(1); }
+    to { transform: scale(1.08); }
+}
+
+.click-text {
+    flex: 1;
+    min-width: 0;
+}
+
+.click-label {
+    font-size: 12px;
+    color: #909399;
+    font-weight: 500;
+    margin-bottom: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.click-value {
+    font-size: 15px;
+    color: #303133;
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* 状态卡片 */
+.status-card {
+    background: linear-gradient(135deg, #fff5f5 0%, #fef0f0 100%);
+    border: 2px solid #fde2e2;
+    border-radius: 14px;
+    padding: 20px 16px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 10px;
+}
+
+.status-label {
+    font-size: 12px;
+    color: #F56C6C;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* 选择器弹窗项 */
+.picker-item {
+    padding: 16px 18px;
+    margin-bottom: 10px;
+    background: #fafafa;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.25s;
+    border: 2px solid transparent;
+}
+
+.picker-item:hover {
+    background: #ecf5ff;
+    border-color: #409EFF;
+    box-shadow: 0 4px 12px rgba(64, 158, 255, 0.12);
+    transform: translateX(4px);
+}
+
+.picker-item:active {
+    transform: translateX(2px) scale(0.98);
+}
+
+/* ==================== AI Logo ==================== */
+.ai-logo-container {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 12px;
+    border-radius: 20px;
+    overflow: hidden;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+    padding: 4px;
+    box-shadow: 0 8px 24px rgba(102, 126, 234, 0.35);
+    animation: logo-glow 3s ease-in-out infinite alternate;
+}
+
+@keyframes logo-glow {
+    from {
+        box-shadow: 0 8px 24px rgba(102, 126, 234, 0.35),
+                    0 0 0 rgba(118, 75, 162, 0);
+    }
+    to {
+        box-shadow: 0 8px 32px rgba(102, 126, 234, 0.55),
+                    0 0 30px rgba(240, 147, 251, 0.3);
+    }
+}
+
+.ai-logo-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 16px;
+}
+
+/* ==================== 刷新按钮 ==================== */
+.refresh-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 18px;
+    background: linear-gradient(135deg, #409EFF 0%, #337ecc 100%);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 12px rgba(64, 158, 255, 0.25);
+}
+
+.refresh-btn:hover {
+    background: linear-gradient(135deg, #53a8ff 0%, #409EFF 100%);
+    box-shadow: 0 6px 20px rgba(64, 158, 255, 0.35);
+    transform: translateY(-1px);
+}
+
+.refresh-btn:active {
+    transform: translateY(0) scale(0.97);
+}
+
+.refresh-btn svg {
+    transition: transform 0.1s;
+}
+
+.refresh-btn.rotating svg {
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* ==================== 弹窗关闭按钮 ==================== */
+.custom-dialog .el-dialog__header {
+    display: none !important; /* 隐藏默认标题栏 */
+}
+
+.dialog-title-custom {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 17px;
+    font-weight: 600;
+    color: #303133;
+    margin-bottom: 15px;
+}
+
+.dialog-close-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #F56C6C 0%, #e64545 100%);
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 3px 10px rgba(245, 108, 108, 0.3);
+    flex-shrink: 0;
+}
+
+.dialog-close-btn:hover {
+    background: linear-gradient(135deg, #f78989 0%, #F56C6C 100%);
+    box-shadow: 0 5px 16px rgba(245, 108, 108, 0.45);
+    transform: scale(1.08) rotate(90deg);
+}
+
+.dialog-close-btn:active {
+    transform: scale(0.95) rotate(90deg);
+}
+
+/* ==================== 表单控件优化 ==================== */
+.el-select .el-input__inner,
+.el-input__inner {
+    border-radius: 10px !important;
+    border: 2px solid #E4E7ED !important;
+    transition: all 0.25s !important;
+    font-size: 14px !important;
+}
+
+.el-select .el-input__inner:focus,
+.el-input__inner:focus {
+    border-color: #409EFF !important;
+    box-shadow: 0 0 0 3px rgba(64, 158, 255, 0.12) !important;
+}
+
+.el-select .el-input__suffix .el-input__icon {
+    color: #409EFF !important;
+    font-weight: bold !important;
+}
+
+/* 下拉箭头自定义 */
+.el-select .el-input__suffix-inner::after {
+    content: '▼';
+    font-size: 10px;
+    color: #409EFF;
+}
+
+/* 数字输入框优化 */
+.el-input-number {
+    border-radius: 10px !important;
+    overflow: hidden;
+}
+
+.el-input-number .el-input__inner {
+    text-align: center;
+    font-weight: 600;
+}
+
+.el-input-number__decrease,
+.el-input-number__increase {
+    background: #f5f7fa !important;
+    transition: all 0.2s !important;
+}
+
+.el-input-number__decrease:hover,
+.el-input-number__increase:hover {
+    background: #ecf5ff !important;
+    color: #409EFF !important;
+}

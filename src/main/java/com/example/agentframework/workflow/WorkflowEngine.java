@@ -4,14 +4,24 @@ import com.example.agentframework.agent.*;
 import com.example.agentframework.workflow.agent.TutorAgent;
 import com.example.agentframework.workflow.agent.GraderAgent;
 import com.example.agentframework.workflow.agent.AnalystAgent;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
+import java.lang.reflect.Type;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 @Service
 public class WorkflowEngine {
+
+    private static final String WORKFLOW_DEF_KEY = "workflow:definition:";
+    private static final String EXECUTION_KEY = "workflow:execution:";
+    private static final String EXECUTION_LIST_KEY = "workflow:executions";
 
     @Autowired
     private AgentRegistry agentRegistry;
@@ -25,8 +35,25 @@ public class WorkflowEngine {
     @Autowired
     private AnalystAgent analystAgent;
 
+    @Autowired(required = false)
+    private StringRedisTemplate redisTemplate;
+
+    @Value("${spring.redis.enabled:false}")
+    private boolean redisEnabled;
+
+    private final Gson gson = new Gson();
     private final Map<String, WorkflowDefinition> workflowDefinitions = new ConcurrentHashMap<>();
     private final Map<String, WorkflowExecution> executionHistory = new ConcurrentHashMap<>();
+
+    private boolean isRedisAvailable() {
+        if (!redisEnabled || redisTemplate == null) return false;
+        try {
+            redisTemplate.getConnectionFactory().getConnection().ping();
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
 
     public void init() {
         agentRegistry.registerAgent(tutorAgent.getId(), tutorAgent);
@@ -36,10 +63,69 @@ public class WorkflowEngine {
         registerEduWorkflow();
         registerGradingWorkflow();
         registerAnalysisWorkflow();
+
+        if (isRedisAvailable()) {
+            loadFromRedis();
+        }
+    }
+
+    private void loadFromRedis() {
+        try {
+            Set<String> defKeys = redisTemplate.keys(WORKFLOW_DEF_KEY + "*");
+            if (defKeys != null) {
+                for (String key : defKeys) {
+                    String json = redisTemplate.opsForValue().get(key);
+                    if (json != null) {
+                        WorkflowDefinition def = gson.fromJson(json, WorkflowDefinition.class);
+                        if (def != null) {
+                            workflowDefinitions.put(def.getId(), def);
+                        }
+                    }
+                }
+            }
+
+            Set<String> execKeys = redisTemplate.keys(EXECUTION_KEY + "*");
+            if (execKeys != null) {
+                for (String key : execKeys) {
+                    String json = redisTemplate.opsForValue().get(key);
+                    if (json != null) {
+                        WorkflowExecution exec = gson.fromJson(json, WorkflowExecution.class);
+                        if (exec != null) {
+                            executionHistory.put(exec.getExecutionId(), exec);
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Redis load failed, using memory: " + e.getMessage());
+        }
+    }
+
+    private void persistDefinition(WorkflowDefinition definition) {
+        if (!isRedisAvailable()) return;
+        try {
+            String json = gson.toJson(definition);
+            redisTemplate.opsForValue().set(WORKFLOW_DEF_KEY + definition.getId(), json, 7, TimeUnit.DAYS);
+        } catch (Exception e) {
+            System.err.println("Redis persist definition failed: " + e.getMessage());
+        }
+    }
+
+    private void persistExecution(WorkflowExecution execution) {
+        if (!isRedisAvailable()) return;
+        try {
+            String json = gson.toJson(execution);
+            redisTemplate.opsForValue().set(EXECUTION_KEY + execution.getExecutionId(), json, 7, TimeUnit.DAYS);
+            redisTemplate.opsForList().rightPush(EXECUTION_LIST_KEY, execution.getExecutionId());
+            redisTemplate.expire(EXECUTION_LIST_KEY, 7, TimeUnit.DAYS);
+        } catch (Exception e) {
+            System.err.println("Redis persist execution failed: " + e.getMessage());
+        }
     }
 
     public void registerWorkflow(WorkflowDefinition definition) {
         workflowDefinitions.put(definition.getId(), definition);
+        persistDefinition(definition);
     }
 
     public WorkflowExecution execute(String workflowId, Map<String, Object> input) {
@@ -132,6 +218,7 @@ public class WorkflowEngine {
 
         execution.setEndTime(new Date());
         executionHistory.put(execution.getExecutionId(), execution);
+        persistExecution(execution);
 
         return execution;
     }

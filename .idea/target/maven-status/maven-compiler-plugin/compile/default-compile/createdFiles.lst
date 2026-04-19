@@ -1,0 +1,17 @@
+com\example\agentframework\service\SubmissionService.class
+com\example\agentframework\controller\AgentController.class
+com\example\agentframework\entity\Assignment.class
+com\example\agentframework\AgentFrameworkApplication.class
+com\example\agentframework\entity\Submission.class
+com\example\agentframework\entity\KnowledgeNode.class
+com\example\agentframework\controller\StudentController.class
+com\example\agentframework\entity\Student.class
+com\example\agentframework\service\KnowledgeNodeService.class
+com\example\agentframework\entity\Agent.class
+com\example\agentframework\controller\KnowledgeNodeController.class
+com\example\agentframework\controller\AssignmentController.class
+com\example\agentframework\agent\AgentResponse.class
+com\example\agentframework\service\StudentService.class
+com\example\agentframework\service\AssignmentService.class
+com\example\agentframework\service\AgentService.class
+com\example\agentframework\controller\SubmissionController.class

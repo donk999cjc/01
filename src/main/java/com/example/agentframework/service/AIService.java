@@ -7,13 +7,17 @@ import okhttp3.*;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 @Service
 public class AIService {
@@ -76,77 +80,96 @@ public class AIService {
      * @return AI回复内容
      */
     public String chat(String systemPrompt, String userMessage) {
-        // 如果没有配置API Key，返回模拟回复
         if (!aiEnabled || apiKey == null || apiKey.isEmpty()) {
             return generateMockResponse(userMessage);
         }
 
+        StringBuilder sb = new StringBuilder();
+        chatStream(systemPrompt, userMessage, chunk -> sb.append(chunk));
+        return sb.toString();
+    }
+
+    public void chatStream(String systemPrompt, String userMessage, Consumer<String> onChunk) {
+        if (!aiEnabled || apiKey == null || apiKey.isEmpty()) {
+            onChunk.accept(generateMockResponse(userMessage));
+            return;
+        }
+
         try {
-            // 构建请求体
             JsonObject requestBody = new JsonObject();
             requestBody.addProperty("model", model);
-            
-            // 构建消息数组
+
             JsonArray messages = new JsonArray();
-            
-            // 系统消息（定义AI角色）
+
             if (systemPrompt != null && !systemPrompt.isEmpty()) {
                 JsonObject systemMessage = new JsonObject();
                 systemMessage.addProperty("role", "system");
                 systemMessage.addProperty("content", systemPrompt);
                 messages.add(systemMessage);
             }
-            
-            // 用户消息
+
             JsonObject userMsg = new JsonObject();
             userMsg.addProperty("role", "user");
             userMsg.addProperty("content", userMessage);
             messages.add(userMsg);
-            
+
             requestBody.add("messages", messages);
             requestBody.addProperty("temperature", 0.7);
             requestBody.addProperty("max_tokens", 2048);
-            
-            // 构建HTTP请求
+            requestBody.addProperty("stream", true);
+
             RequestBody body = RequestBody.create(
-                    MediaType.parse("application/json"), 
+                    MediaType.parse("application/json"),
                     requestBody.toString()
             );
-            
+
             Request request = new Request.Builder()
                     .url(ZHIPU_API_URL)
                     .post(body)
                     .addHeader("Authorization", "Bearer " + apiKey)
                     .addHeader("Content-Type", "application/json")
                     .build();
-            
-            // 发送请求
-            try (Response response = client.newCall(request).execute()) {
+
+            OkHttpClient streamClient = client.newBuilder()
+                    .readTimeout(120, TimeUnit.SECONDS)
+                    .build();
+
+            try (Response response = streamClient.newCall(request).execute()) {
                 if (!response.isSuccessful()) {
-                    String errorBody = response.body() != null ? response.body().string() : "Unknown error";
-                    System.err.println("AI API调用失败: " + response.code() + " - " + errorBody);
-                    return generateMockResponse(userMessage);
+                    onChunk.accept(generateMockResponse(userMessage));
+                    return;
                 }
-                
-                String responseBody = response.body().string();
-                JsonObject jsonResponse = gson.fromJson(responseBody, JsonObject.class);
-                
-                // 解析AI回复
-                JsonArray choices = jsonResponse.getAsJsonArray("choices");
-                if (choices != null && choices.size() > 0) {
-                    JsonObject firstChoice = choices.get(0).getAsJsonObject();
-                    JsonObject message = firstChoice.getAsJsonObject("message");
-                    if (message != null) {
-                        return message.get("content").getAsString();
+
+                BufferedReader reader = new BufferedReader(
+                        new InputStreamReader(response.body().byteStream(), StandardCharsets.UTF_8));
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    if (line.startsWith("data:")) {
+                        String data = line.substring(5).trim();
+                        if ("[DONE]".equals(data)) {
+                            break;
+                        }
+                        try {
+                            JsonObject chunk = gson.fromJson(data, JsonObject.class);
+                            JsonArray choices = chunk.getAsJsonArray("choices");
+                            if (choices != null && choices.size() > 0) {
+                                JsonObject delta = choices.get(0).getAsJsonObject()
+                                        .getAsJsonObject("delta");
+                                if (delta != null && delta.has("content")) {
+                                    String content = delta.get("content").getAsString();
+                                    if (content != null && !content.isEmpty()) {
+                                        onChunk.accept(content);
+                                    }
+                                }
+                            }
+                        } catch (Exception ignored) {
+                        }
                     }
                 }
-                
-                return "抱歉，AI服务暂时无法回复，请稍后再试。";
             }
-            
         } catch (IOException e) {
-            System.err.println("AI API调用异常: " + e.getMessage());
-            return generateMockResponse(userMessage);
+            System.err.println("AI stream error: " + e.getMessage());
+            onChunk.accept(generateMockResponse(userMessage));
         }
     }
 

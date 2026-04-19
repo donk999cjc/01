@@ -2,7 +2,6 @@
  * 教师端页面逻辑
  * 文件：js/teacher.js
  * 描述：教师工作台的Vue应用实例和业务逻辑
- * 作者：教育AI团队
  */
 
 new Vue({
@@ -33,7 +32,22 @@ new Vue({
             showNewDlg: false,
             creating: false,
             editingId: null,
-            af: { title: '', courseId: '', dueDate: '', totalScore: 100, description: '' },
+            af: {
+                title: '',
+                courseId: '',
+                dueDate: '',
+                totalScore: 100,
+                description: '',
+
+                // 新增作业扩展字段（比赛版）
+                homeworkType: 'WRITTEN',
+                gradingStandard: '',
+                allowLate: false,
+                latePenalty: 10,
+                fileList: [],
+                attachmentUrl: ''
+            },
+            showAdvanced: false,  // 控制高级设置展开
 
             // 图表实例
             lc: null, bc: null,
@@ -43,6 +57,13 @@ new Vue({
             ranking: [],
             warnings: [],  // 学情预警列表
             deletedWarnings: [],  // 已删除的预警ID列表（用于持久化）
+
+            // 新增：点击选择器弹窗
+            showAssignmentPicker: false,
+            showStudentPicker: false,
+
+            // 新增：刷新状态
+            refreshing: false,
         }
     },
     computed: {
@@ -72,12 +93,26 @@ new Vue({
         }
     },
     mounted() {
-        this.lc = echarts.init(document.getElementById('lineChart'))
-        this.bc = echarts.init(document.getElementById('barChart'))
-        window.addEventListener('resize', () => { this.lc.resize(); this.bc.resize() })
+        window.addEventListener('resize', () => {
+            if (this.lc) this.lc.resize()
+            if (this.bc) this.bc.resize()
+        })
     },
     watch: {
-        currentTab(v) { if (v === 'analytics') { this.$nextTick(() => this.renderCharts()) } }
+        currentTab(v) {
+            if (v === 'analytics') {
+                this.$nextTick(() => {
+                    // 切换到数据分析标签时，再初始化图表
+                    if (!this.lc) {
+                        this.lc = echarts.init(document.getElementById('lineChart'));
+                    }
+                    if (!this.bc) {
+                        this.bc = echarts.init(document.getElementById('barChart'));
+                    }
+                    this.renderCharts();
+                });
+            }
+        }
     },
     methods: {
         handleLogout() {
@@ -259,7 +294,12 @@ new Vue({
                 if (this.currentTab === 'analytics') this.$nextTick(() => this.renderCharts())
             } catch (e) { console.error(e) } finally { this.loading = false }
         },
-        refreshAll() { this.loadAll(); this.$message.success('已刷新') },
+        async refreshAll() {
+            this.refreshing = true
+            await this.loadAll()
+            setTimeout(() => { this.refreshing = false }, 800)
+            this.$message.success('数据已刷新')
+        },
 
         // ---- 批改 ----
         onFileChange(e) { const f = e.target.files[0]; if (f) this.readImg(f) },
@@ -277,6 +317,20 @@ new Vue({
             if (this.selStudentId) {
                 this.loadStudentSubmission()
             }
+        },
+
+        // 新增：点击选择作业
+        selectAssignment(assignment) {
+            this.selAid = assignment.id
+            this.onSelectAssignment()
+            this.$message.success(`已选择作业: ${assignment.title}`)
+        },
+
+        // 新增：点击选择学生
+        async selectStudent(student) {
+            this.selStudentId = student.studentId
+            await this.loadStudentSubmission()
+            this.$message.success(`已选择学生: ${student.realName}`)
         },
 
         async loadStudentSubmission() {
@@ -466,13 +520,36 @@ new Vue({
         },
         editAssign(a) {
             this.editingId = a.id
+            console.log('✏️ 编辑作业，原始数据:', JSON.stringify(a))
+
             Object.assign(this.af, {
                 title: a.title || '',
                 courseId: a.courseId || '',
-                dueDate: a.dueDate || '',
+                dueDate: a.dueDate ? (a.dueDate instanceof Date ? a.dueDate.toISOString().slice(0, 16).replace('T', ' ') : a.dueDate.slice(0, 16)) : '',
                 totalScore: a.totalScore || 100,
-                description: a.description || ''
+                description: a.description || '',
+
+                // 新增：回显所有字段（解决编辑时不显示的问题）
+                homeworkType: a.homeworkType || 'WRITTEN',
+                gradingStandard: a.gradingStandard || '',
+
+                // 文件路径和文件名（关键！）
+                filePath: a.filePath || null,
+                fileName: a.fileName || null,
+
+                // 文件列表（用于 el-upload 组件显示已上传文件）
+                fileList: (a.fileName && a.filePath) ? [{
+                    name: a.fileName,
+                    url: a.filePath,
+                    status: 'success'
+                }] : []
             })
+
+            // 如果有附件，提示用户
+            if (a.fileName) {
+                console.log('📎 已有附件:', a.fileName, '路径:', a.filePath)
+            }
+
             this.showNewDlg = true
         },
         saveAssign() {
@@ -654,171 +731,172 @@ new Vue({
         },
 
         renderCharts() {
-            if (!this.lc || !this.bc) return
+            this.calcStats();
 
-            // 优化数据匹配逻辑：支持多种assignmentId格式
-            const findSubmission = (studentId, assignmentId) => {
-                return this.submissions.find(s => {
-                    const sAssignmentId = String(s.assignmentId || '')
-                    const targetId = String(assignmentId)
-                    return s.studentId === studentId && (
-                        sAssignmentId === targetId ||
-                        sAssignmentId === String(this.assignments.find(a => a.id === Number(targetId))?.assignmentId) ||
-                        sAssignmentId === this.assignments.find(a => a.id === Number(assignmentId))?.assignmentId
-                    )
-                })
+            // 确保图表实例已初始化
+            if (!this.lc) {
+                this.lc = echarts.init(document.getElementById('lineChart'));
+            }
+            if (!this.bc) {
+                this.bc = echarts.init(document.getElementById('barChart'));
             }
 
-            const getScore = (studentId, assignmentId) => {
-                const sub = findSubmission(studentId, assignmentId)
-                return (sub && sub.score != null && sub.score !== '') ? Number(sub.score) : null
-            }
+            // 排序作业
+            const sortedAs = [...this.assignments].sort((a, b) => new Date(a.createdAt || 0) - new Date(b.createdAt || 0));
+            const xData = sortedAs.map(a => a.title || `作业${a.id}`);
+            const colors = ['#409EFF', '#67C23A', '#E6A23C', '#F56C6C', '#909399', '#00CED1'];
 
-            // 折线图
-            const sortedAs = [...this.assignments].sort((a, b) => new Date(a.createdAt || 0) - new Date(b.createdAt || 0))
-            const xData = sortedAs.map(a => a.title || `作业${a.id}`)
-            const colors = ['#409EFF', '#67C23A', '#E6A23C', '#F56C6C', '#909399', '#00CED1']
-            let ci = 0
-            const series = []
+            // ==================== 折线图：每个学生成绩曲线 ====================
+            const series = [];
+            let ci = 0;
             this.students.forEach(st => {
-                const scores = sortedAs.map(a => getScore(st.studentId, a.id))
-                if (scores.some(s => s != null)) {
+                const scores = sortedAs.map(a => {
+                    const sub = this.submissions.find(s =>
+                        s.studentId === st.studentId &&
+                        (String(s.assignmentId) === String(a.id) || String(s.assignmentId) === String(a.assignmentId))
+                    );
+                    return sub && sub.score != null ? Number(sub.score) : null;
+                });
+
+                if (scores.some(s => s !== null)) {
                     series.push({
                         name: st.realName,
                         type: 'line',
                         smooth: true,
                         data: scores,
-                        connectNulls: false,
                         lineStyle: { width: 2 },
-                        itemStyle: { color: colors[ci++ % colors.length] },
-                        markPoint: {
-                            data: [
-                                { type: 'max', name: '最高分' },
-                                { type: 'min', name: '最低分' }
-                            ]
-                        }
-                    })
+                        itemStyle: { color: colors[ci++ % colors.length] }
+                    });
                 }
-            })
+            });
 
-            // 如果没有数据，显示提示信息
             if (series.length === 0) {
-                this.lc.setOption({
-                    title: {
-                        text: '暂无数据',
-                        left: 'center',
-                        top: 'center',
-                        textStyle: { fontSize: 16, color: '#909399' }
-                    }
-                })
+                this.lc.setOption({ title: { text: '暂无批改数据', textStyle: { color: '#909399' } } });
             } else {
                 this.lc.setOption({
-                    tooltip: {
-                        trigger: 'axis',
-                        formatter: function (params) {
-                            let result = params[0].axisValue + '<br/>'
-                            params.forEach(item => {
-                                if (item.value != null) {
-                                    result += `${item.marker} ${item.seriesName}: <b>${item.value}</b>分<br/>`
-                                } else {
-                                    result += `${item.marker} ${item.seriesName}: <span style="color:#999">未提交</span><br/>`
-                                }
-                            })
-                            return result
-                        }
-                    },
-                    legend: {
-                        bottom: 0,
-                        type: 'scroll',
-                        data: series.map(s => s.name)
-                    },
-                    grid: { left: '3%', right: '4%', bottom: '12%', top: '8%', containLabel: true },
-                    xAxis: {
-                        type: 'category',
-                        data: xData,
-                        axisLabel: { rotate: 25, fontSize: 11 }
-                    },
-                    yAxis: {
-                        type: 'value',
-                        name: '分数',
-                        min: 0,
-                        max: 100,
-                        interval: 20
-                    },
-                    series
-                }, true)
+                    tooltip: { trigger: 'axis' },
+                    legend: { bottom: 0, type: 'scroll' },
+                    grid: { left: '3%', right: '4%', bottom: '12%', top: '8%' },
+                    xAxis: { type: 'category', data: xData, axisLabel: { rotate: 25 } },
+                    yAxis: { type: 'value', min: 0, max: 100, name: '分数' },
+                    series: series
+                }, true);
             }
 
-            // 柱状图 - 成绩分布
-            const ranges = ['<60', '60-69', '70-79', '80-89', '90-100']
-            const barSeries = ranges.map(r => ({ name: r, type: 'bar', stack: 'total', data: [], itemStyle: {} }))
+            // ==================== 柱状图：各作业分数分布 ====================
+            const ranges = ['<60', '60-69', '70-79', '80-89', '90-100'];
+            const barColors = ['#f56c6c', '#e6a23c', '#409EFF', '#67c23a', '#67c23a'];
+            const barSeries = ranges.map(r => ({ name: r, type: 'bar', stack: 'total', data: [] }));
 
             sortedAs.forEach(a => {
                 const subs = this.submissions.filter(s => {
-                    const sAssignmentId = String(s.assignmentId || '')
-                    return (sAssignmentId === String(a.id) ||
-                        sAssignmentId === a.assignmentId ||
-                        sAssignmentId === String(this.assignments.find(asgn => asgn.id === a.id)?.assignmentId)) &&
-                        s.score != null && s.score !== ''
-                })
+                    const aid = String(s.assignmentId || '');
+                    return (aid === String(a.id) || aid === String(a.assignmentId)) && s.score != null;
+                });
 
-                const c = [0, 0, 0, 0, 0]
+                const c = [0, 0, 0, 0, 0];
                 subs.forEach(s => {
-                    const sc = Number(s.score)
-                    if (sc < 60) c[0]++
-                    else if (sc < 70) c[1]++
-                    else if (sc < 80) c[2]++
-                    else if (sc < 90) c[3]++
-                    else c[4]++
-                })
-
-                barSeries.forEach((s, i) => {
-                    s.data.push(c[i])
-                })
-            })
-
-            const barColors = ['#f56c6c', '#e6a23c', '#409EFF', '#67c23a', '#67c23a']
+                    const sc = Number(s.score);
+                    if (sc < 60) c[0]++;
+                    else if (sc < 70) c[1]++;
+                    else if (sc < 80) c[2]++;
+                    else if (sc < 90) c[3]++;
+                    else c[4]++;
+                });
+                barSeries.forEach((s, i) => s.data.push(c[i]));
+            });
 
             if (sortedAs.length === 0 || barSeries.every(s => s.data.every(d => d === 0))) {
-                this.bc.setOption({
-                    title: {
-                        text: '暂无数据',
-                        left: 'center',
-                        top: 'center',
-                        textStyle: { fontSize: 16, color: '#909399' }
-                    }
-                })
+                this.bc.setOption({ title: { text: '暂无分布数据', textStyle: { color: '#909399' } } });
             } else {
                 this.bc.setOption({
-                    tooltip: {
-                        trigger: 'axis',
-                        axisPointer: { type: 'shadow' },
-                        formatter: function (params) {
-                            let total = 0
-                            params.forEach(p => { if (typeof p.value === 'number') total += p.value })
-                            let result = params[0].axisValue + `<br/><b>总计: ${total}人</b><br/>`
-                            params.forEach(p => {
-                                if (p.value > 0) {
-                                    result += `${p.marker}${p.seriesName}: ${p.value}人 (${total > 0 ? (p.value / total * 100).toFixed(1) : 0}%)<br/>`
-                                }
-                            })
-                            return result
-                        }
-                    },
+                    tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
                     legend: { bottom: 0 },
-                    grid: { left: '3%', right: '4%', bottom: '12%', top: '5%', containLabel: true },
-                    xAxis: {
-                        type: 'category',
-                        data: sortedAs.map(a => a.title || `作业${a.id}`),
-                        axisLabel: { rotate: 25, fontSize: 11 }
-                    },
-                    yAxis: {
-                        type: 'value',
-                        name: '人数'
-                    },
+                    grid: { left: '3%', right: '4%', bottom: '12%', top: '5%' },
+                    xAxis: { type: 'category', data: xData, axisLabel: { rotate: 25 } },
+                    yAxis: { type: 'value', name: '人数' },
                     series: barSeries.map((s, i) => ({ ...s, itemStyle: { color: barColors[i] } }))
-                }, true)
+                }, true);
             }
+        },
+        handleFileChange(file, fileList) {
+            this.af.fileList = fileList;
+        },
+
+        // 自定义上传方法（使用正确的后端接口）
+        async customUpload(options) {
+            const { file, onSuccess, onError } = options;
+
+            // 如果还没有创建作业，先提示
+            if (!this.editingId && !this.af.title) {
+                this.$message.warning('请先填写作业标题后再上传附件');
+                onError(new Error('请先填写作业信息'));
+                return;
+            }
+
+            try {
+                const formData = new FormData();
+                formData.append('file', file);
+
+                let uploadUrl;
+                if (this.editingId) {
+                    // 编辑模式：直接上传到已有作业
+                    uploadUrl = `/api/assignments/${this.editingId}/upload-attachment`;
+                } else {
+                    // 新建模式：先创建作业，再上传
+                    const createRes = await fetch('/api/assignments', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            title: this.af.title || '临时作业',
+                            courseId: this.af.courseId || 'TEMP',
+                            totalScore: this.af.totalScore || 100,
+                            description: this.af.description || ''
+                        })
+                    });
+                    const createdData = await createRes.json();
+                    this.editingId = createdData.id;
+                    uploadUrl = `/api/assignments/${createdData.id}/upload-attachment`;
+                }
+
+                const response = await fetch(uploadUrl, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.ok) {
+                    const result = await response.text();
+                    console.log('上传成功:', result);
+                    
+                    // 更新 af 对象的文件路径（关键！）
+                    this.$set(this.af, 'filePath', '/uploads/' + file.name);
+                    this.$set(this.af, 'fileName', file.name);
+                    
+                    onSuccess({ url: this.af.filePath }, file);
+                    this.$message.success(`✅ 附件 "${file.name}" 上传成功！`);
+                } else {
+                    const errorText = await response.text();
+                    console.error('上传失败:', errorText);
+                    onError(new Error(errorText || '上传失败'));
+                    this.$message.error('❌ 附件上传失败：' + (errorText || '服务器错误'));
+                }
+            } catch (error) {
+                console.error('上传异常:', error);
+                onError(error);
+                this.$message.error('❌ 上传异常：' + error.message);
+            }
+        },
+
+        handleUploadSuccess(response, file, fileList) {
+            console.log('handleUploadSuccess:', response, file);
+            // filePath 和 fileName 已经在 customUpload 中设置了
+            if (response && response.url) {
+                this.af.attachmentUrl = response.url;
+            }
+        },
+        handleUploadError(err) {
+            console.error('handleUploadError:', err);
+            this.$message.error('❌ 附件上传失败，请检查文件格式或网络。');
         }
     }
 })

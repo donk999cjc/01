@@ -33,9 +33,9 @@ CREATE TABLE IF NOT EXISTS student_mastery (
 -- 第2部分：为 knowledge_node 表添加向量索引字段
 -- ============================================
 
-ALTER TABLE knowledge_node ADD COLUMN IF NOT EXISTS embedding_id VARCHAR(100) DEFAULT NULL COMMENT '向量索引ID' AFTER difficulty;
-ALTER TABLE knowledge_node ADD COLUMN IF NOT EXISTS chunk_count INT DEFAULT 0 COMMENT '分块数量' AFTER embedding_id;
-ALTER TABLE knowledge_node ADD COLUMN IF NOT EXISTS tags VARCHAR(500) DEFAULT NULL COMMENT '标签(逗号分隔)' AFTER chunk_count;
+ALTER TABLE knowledge_node ADD COLUMN  embedding_id VARCHAR(100) DEFAULT NULL COMMENT '向量索引ID' AFTER difficulty;
+ALTER TABLE knowledge_node ADD COLUMN  chunk_count INT DEFAULT 0 COMMENT '分块数量' AFTER embedding_id;
+ALTER TABLE knowledge_node ADD COLUMN  tags VARCHAR(500) DEFAULT NULL COMMENT '标签(逗号分隔)' AFTER chunk_count;
 
 -- ============================================
 -- 第3部分：创建 workflow_execution 表

@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import javax.servlet.http.HttpSession;
 
 import java.util.HashMap;
 import java.util.List;
@@ -25,12 +26,32 @@ public class AuthController {
     private TeacherService teacherService;
 
     @PostMapping("/login")
-    public ResponseEntity<Map<String, Object>> login(@RequestBody Map<String, String> loginForm) {
+    public ResponseEntity<Map<String, Object>> login(@RequestBody Map<String, String> loginForm, HttpSession session) {
+
+        // ===================== 验证码校验（只加了这段） =====================
+        String captcha = loginForm.get("captcha");
+        if (captcha == null || captcha.trim().isEmpty()) {
+            Map<String, Object> result = new HashMap<>();
+            result.put("success", false);
+            result.put("message", "请输入验证码");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(result);
+        }
+
+        String sessionCaptcha = (String) session.getAttribute("captcha");
+        if (sessionCaptcha == null || !captcha.equalsIgnoreCase(sessionCaptcha)) {
+            Map<String, Object> result = new HashMap<>();
+            result.put("success", false);
+            result.put("message", "验证码错误或已过期");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(result);
+        }
+        session.removeAttribute("captcha");
+        // ==================================================================
+
         String username = loginForm.get("username");
         String password = loginForm.get("password");
-        
+
         Map<String, Object> result = new HashMap<>();
-        
+
         // 首先尝试查询 student 表（学生登录）
         Student student = studentService.getStudentByStudentId(username);
         if (student != null) {
@@ -43,7 +64,7 @@ public class AuthController {
                 userData.put("realName", student.getRealName());
                 userData.put("role", "STUDENT");
                 userData.put("studentId", student.getStudentId());
-                
+
                 result.put("success", true);
                 result.put("message", "登录成功");
                 result.put("user", userData);
@@ -51,7 +72,7 @@ public class AuthController {
                 return ResponseEntity.ok(result);
             }
         }
-        
+
         // 尝试查询 teacher 表（教师登录）
         Teacher teacher = teacherService.findByTeacherId(username);
         if (teacher != null) {
@@ -64,7 +85,7 @@ public class AuthController {
                 userData.put("realName", teacher.getRealName());
                 userData.put("role", "TEACHER");
                 userData.put("teacherId", teacher.getTeacherId());
-                
+
                 result.put("success", true);
                 result.put("message", "登录成功");
                 result.put("user", userData);
@@ -72,7 +93,7 @@ public class AuthController {
                 return ResponseEntity.ok(result);
             }
         }
-        
+
         // 登录失败
         result.put("success", false);
         result.put("message", "用户名或密码错误");

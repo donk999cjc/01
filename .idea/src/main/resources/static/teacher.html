@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>教师端 - 跨课程智能教学平台</title>
+
+    <!-- Element UI CSS -->
+    <link rel="stylesheet" href="lib/element-ui/index.css">
+
+    <!-- 自定义样式 -->
+    <link rel="stylesheet" href="css/teacher.css">
+</head>
+<body>
+<div id="app" class="app">
+    <!-- ====== 侧边栏 ====== -->
+    <div class="sidebar">
+        <div class="logo">
+            <h2>🎓 智能教学平台</h2>
+            <p>教师工作台</p>
+        </div>
+
+        <div class="nav-section">
+            <div class="nav-label">核心功能</div>
+            <div class="nav-item" :class="{active:currentTab==='review'}" @click="currentTab='review'">
+                <span class="nav-icon">🤖</span><span class="nav-text">AI 批改作业</span>
+            </div>
+            <div class="nav-item" :class="{active:currentTab==='assignments'}" @click="currentTab='assignments'">
+                <span class="nav-icon">📝</span><span class="nav-text">作业管理</span>
+            </div>
+            <div class="nav-item" :class="{active:currentTab==='analytics'}" @click="currentTab='analytics'">
+                <span class="nav-icon">📊</span><span class="nav-text">数据分析</span>
+            </div>
+
+            <div class="nav-label">人员管理</div>
+            <div class="nav-item" :class="{active:currentTab==='students'}" @click="currentTab='students'">
+                <span class="nav-icon">👨‍🎓</span><span class="nav-text">学生管理</span>
+            </div>
+            <div class="nav-item" :class="{active:currentTab==='teachers'}" @click="currentTab='teachers'">
+                <span class="nav-icon">👨‍🏫</span><span class="nav-text">教师信息</span>
+            </div>
+        </div>
+
+        <div class="sidebar-footer">
+            <div class="logout-btn" @click="handleLogout">
+                🚪 退出登录
+            </div>
+        </div>
+    </div>
+
+    <!-- ====== 主内容 ====== -->
+    <div class="main">
+        <div class="topbar">
+            <div class="topbar-title">{{ tabTitle }}</div>
+            <el-button size="small" icon="el-icon-refresh" @click="refreshAll">刷新数据</el-button>
+        </div>
+
+        <div class="content">
+
+            <!-- ========== TAB 1: AI 批改作业 ========== -->
+            <div v-show="currentTab==='review'">
+                <h3 style="margin-bottom:16px;color:#303133">AI 智能批改（使用Agent模块）</h3>
+
+                <!-- 步骤1: 选择作业和学生 -->
+                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:18px;">
+                    <div>
+                        <label style="display:block;font-weight:600;margin-bottom:6px;font-size:13px;">选择作业：</label>
+                        <el-select v-model="selAid" placeholder="请选择作业" size="medium" style="width:100%" @change="onSelectAssignment">
+                            <el-option v-for="a in assignments" :key="a.id" :label="a.title" :value="a.id"></el-option>
+                        </el-select>
+                    </div>
+                    <div>
+                        <label style="display:block;font-weight:600;margin-bottom:6px;font-size:13px;">选择学生：</label>
+                        <el-select v-model="selStudentId" placeholder="请选择学生" size="medium" style="width:100%" @change="loadStudentSubmission">
+                            <el-option v-for="s in students" :key="s.studentId" :label="s.realName + ' (' + s.studentId + ')'" :value="s.studentId"></el-option>
+                        </el-select>
+                    </div>
+                    <div>
+                        <label style="display:block;font-weight:600;margin-bottom:6px;font-size:13px;">提交状态：</label>
+                        <el-tag :type="studentSubmission ? (studentSubmission.status==='graded'?'success':'warning'):'info'" size="medium">
+                            {{ studentSubmission ? (studentSubmission.status==='graded'?'已批改':'待批改') : '未找到' }}
+                        </el-tag>
+                    </div>
+                </div>
+
+                <!-- 显示作业信息 -->
+                <div v-if="selAssignment" class="card" style="margin-bottom:16px;">
+                    <h4 style="margin-bottom:8px;color:#303133">📋 作业信息</h4>
+                    <div style="font-size:13px;line-height:1.8;color:#606266">
+                        <strong>课程：</strong>{{ selAssignment.courseId }} | 
+                        <strong>总分：</strong>{{ selAssignment.totalScore || 100 }} 分<br>
+                        <strong>要求：</strong>{{ selAssignment.description || '无' }}
+                    </div>
+                </div>
+
+                <!-- 显示学生提交的图片 -->
+                <div v-if="studentImageUrl">
+                    <h4 style="margin-bottom:12px;color:#303133">📷 学生提交的作业图片（{{ selStudentName }}）</h4>
+                    <div style="text-align:center;background:#fafafa;padding:20px;border-radius:10px;border:2px solid #e4e7ed;">
+                        <img :src="studentImageUrl" style="max-width:100%;max-height:450px;border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,0.15);">
+
+                        <div style="margin-top:16px;display:flex;justify-content:center;align-items:center;gap:12px;">
+                            <el-button type="primary" size="large" :loading="reviewing" :disabled="!selAid||!selStudentId||!studentImageUrl" @click="doReviewWithAgent" icon="el-icon-magic-stick">
+                                🤖 开始 AI 智能批改
+                            </el-button>
+                            <span style="color:#909399;font-size:12px;">（将调用 Agent 模块进行深度分析）</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 未找到提交 -->
+                <div v-else-if="selAid && selStudentId" style="text-align:center;padding:50px;background:#fff;border-radius:10px;">
+                    <div style="font-size:48px;margin-bottom:12px;">📭</div>
+                    <p style="color:#909399;font-size:15px;margin-bottom:6px;">该学生尚未提交此作业</p>
+                    <p style="color:#c0c4cc;font-size:13px;">请等待学生提交后再进行批改</p>
+                </div>
+
+                <!-- 提示选择 -->
+                <div v-else style="text-align:center;padding:40px;background:#f5f7fa;border-radius:10px;">
+                    <p style="color:#909399;font-size:14px;">请在上方选择要批改的作业和学生</p>
+                </div>
+
+                <!-- 批改结果 -->
+                <div v-if="reviewResult" class="review-card" style="margin-top:20px;">
+                    <div class="score-big">
+                        <div class="score-num">{{ reviewResult.score }}</div>
+                        <div class="score-sub">分 / {{ selAssignment?.totalScore || 100 }} 分</div>
+                    </div>
+
+                    <!-- 详细反馈 -->
+                    <div class="feedback-box">
+                        <h4 style="margin-bottom:10px;font-size:14px;font-weight:600;color:#303133">AI智能批改报告</h4>
+
+                        <!-- 如果有详细反馈，格式化显示 -->
+                        <div v-if="reviewResult.feedback" style="white-space:pre-line;line-height:1.7;font-size:13px;color:#333;" v-html="formatFeedback(reviewResult.feedback)"></div>
+
+                        <!-- 兼容旧的fbList格式 -->
+                        <template v-else>
+                            <div v-for="(item,i) in fbList" :key="i" class="fb-item">{{ item }}</div>
+                        </template>
+
+                        <!-- 识别内容（折叠显示） -->
+                        <el-collapse v-if="reviewResult.recognizedContent" style="margin-top:12px;">
+                            <el-collapse-item title="图片内容识别（点击展开）">
+                                <p style="color:#666;line-height:1.6;font-size:12px">{{ formatRecognizedContent(reviewResult.recognizedContent) }}</p>
+                            </el-collapse-item>
+                        </el-collapse>
+
+                        <!-- 学习总结（学生可见） -->
+                        <div v-if="reviewResult.learningSummary" style="margin-top:16px;padding:14px;background:#fff9e6;border-left:4px solid #E6A23C;border-radius:6px;">
+                            <h4 style="margin-bottom:10px;color:#E6A23C;font-size:14px;font-weight:600">学习总结与建议</h4>
+                            <div style="white-space:pre-line;line-height:1.7;font-size:13px;color:#555;">
+                                {{ reviewResult.learningSummary }}
+                            </div>
+                        </div>
+
+                        <!-- 警告信息 -->
+                        <div v-if="reviewResult.warning" style="margin-top:12px;padding:10px;background:#fef0f0;border-radius:6px;color:#f56c6c;font-size:12px">
+                            {{ reviewResult.warning }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ========== TAB 2: 作业管理 ========== -->
+            <div v-show="currentTab==='assignments'">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+                    <h3 style="color:#303133">📝 作业列表（{{ assignments.length }}）</h3>
+                    <el-button type="primary" size="small" @click="showNewDlg=true">➕ 新建作业</el-button>
+                </div>
+
+                <div v-loading="loading">
+                    <div v-for="a in assignments" :key="a.id" class="card">
+                        <div class="card-header">
+                            <span class="card-title">{{ a.title }}</span>
+                            <el-tag size="mini" :type="statusType(a.status)">{{ statusText(a.status) }}</el-tag>
+                        </div>
+                        <div class="card-meta">
+                            <span>📚 {{ a.courseId }}</span>
+                            <span>⏰ {{ a.dueDate || '未设截止' }}</span>
+                            <span>📊 {{ a.totalScore || 100 }}分</span>
+                            <span>📈 提交{{ getSubCount(a.id) }}次</span>
+                        </div>
+                        <div class="card-desc">{{ a.description || '暂无描述' }}</div>
+                        <div class="btn-row">
+                            <el-button size="mini" type="primary" @click="goReview(a)">📤 上传批改</el-button>
+                            <el-button size="mini" type="warning" @click="editAssign(a)">✏️ 编辑</el-button>
+                            <el-button size="mini" type="danger" @click="delAssign(a)">删除</el-button>
+                        </div>
+                    </div>
+                    <div v-if="!loading&&!assignments.length" style="text-align:center;padding:50px;color:#c0c4cc">
+                        <div style="font-size:40px;margin-bottom:10px">📝</div>
+                        暂无作业，点击右上角新建
+                    </div>
+                </div>
+            </div>
+
+            <!-- ========== TAB 3: 数据分析 ========== -->
+            <div v-show="currentTab==='analytics'">
+                <!-- 统计卡片 -->
+                <div class="stat-grid">
+                    <div class="stat-box"><div class="stat-icon">👨‍🎓</div><div class="stat-val">{{ stats.students }}</div><div class="stat-lbl">学生总数</div></div>
+                    <div class="stat-box"><div class="stat-icon">📝</div><div class="stat-val">{{ stats.assignments }}</div><div class="stat-lbl">作业总数</div></div>
+                    <div class="stat-box"><div class="stat-icon">✅</div><div class="stat-val">{{ stats.avgScore }}</div><div class="stat-lbl">平均正确率%</div></div>
+                    <div class="stat-box"><div class="stat-icon">📈</div><div class="stat-val" :style="{color:stats.trend>=0?'#67c23a':'#f56c6c'}">{{ stats.trend>0?'+':'' }}{{ stats.trend }}%</div><div class="stat-lbl">整体趋势</div></div>
+                </div>
+
+                <!-- 折线图 -->
+                <div class="chart-card">
+                    <div class="chart-title">📈 学生作业正确率变化趋势（折线图）</div>
+                    <div id="lineChart" style="height:420px"></div>
+                </div>
+
+                <!-- 分布柱状图 -->
+                <div class="chart-card">
+                    <div class="chart-title">📊 各次作业成绩分布对比</div>
+                    <div id="barChart" style="height:320px"></div>
+                </div>
+
+                <!-- 排行榜 -->
+                <div class="chart-card">
+                    <div class="chart-title">🏆 学生正确率排行榜</div>
+                    <div class="rank-row" style="background:#fafafa;font-weight:bold;font-size:12px">
+                        <span class="rank-num">#</span>
+                        <span class="rank-name">姓名</span>
+                        <span class="rank-id">学号</span>
+                        <span class="rank-score">平均分</span>
+                        <span class="rank-score">最高分</span>
+                        <span style="width:55px">次数</span>
+                        <span style="width:65px">趋势</span>
+                        <span style="flex:1;text-align:right">最近5次</span>
+                    </div>
+                    <div v-for="(r,i) in ranking" :key="r.sid" class="rank-row">
+                        <span class="rank-num"><el-tag size="mini" :type="i===0?'danger':i===1?'warning':i===2?'success':'info'">{{i+1}}</el-tag></span>
+                        <span class="rank-name">{{ r.name }}</span>
+                        <span class="rank-id">{{ r.sid }}</span>
+                        <span class="rank-score">{{ r.avg }}</span>
+                        <span class="rank-score" style="color:#67c23a">{{ r.max||'-' }}</span>
+                        <span style="width:55px;color:#909399;font-size:12px">{{ r.cnt }}次</span>
+                        <span class="rank-trend"><span :class="r.t>0?'trend-up':r.t<0?'trend-down':'trend-flat'">{{r.t>0?'↑'+r.t:r.t<0?'↓'+Math.abs(r.t):'→'}}%</span></span>
+                        <span style="flex:1;text-align:right">
+                            <el-tag v-for="(s,j) in (r.recent||[])" :key="j" size="mini" :type="s>=85?'success':s>=70?'':s>=60?'warning':'danger'" style="margin-left:2px">{{s}}</el-tag>
+                        </span>
+                    </div>
+                    <div v-if="!ranking.length" style="text-align:center;padding:36px;color:#c0c4cc">暂无批改数据</div>
+                </div>
+
+                <!-- 学情预警 -->
+                <div class="chart-card" style="background:linear-gradient(135deg,#fff5f5 0%,#ffe8e8 100%);border:2px solid #f56c6c">
+                    <div class="chart-title" style="border-left-color:#f56c6c;color:#f56c6c">⚠️ 学情预警中心</div>
+                    
+                    <!-- 预警统计 -->
+                    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:18px">
+                        <div style="background:#fff;padding:16px;border-radius:8px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,0.06)">
+                            <div style="font-size:28px;font-weight:bold;color:#f56c6c">{{ warnings.length }}</div>
+                            <div style="font-size:12px;color:#909399;margin-top:4px">预警总数</div>
+                        </div>
+                        <div style="background:#fff;padding:16px;border-radius:8px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,0.06)">
+                            <div style="font-size:28px;font-weight:bold;color:#e6a23c">{{ warnings.filter(w=>w.type==='score_decline').length }}</div>
+                            <div style="font-size:12px;color:#909399;margin-top:4px">成绩下滑</div>
+                        </div>
+                        <div style="background:#fff;padding:16px;border-radius:8px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,0.06)">
+                            <div style="font-size:28px;font-weight:bold;color:#909399">{{ warnings.filter(w=>w.type==='no_submit').length }}</div>
+                            <div style="font-size:12px;color:#909399;margin-top:4px">缺交作业</div>
+                        </div>
+                    </div>
+
+                    <!-- 预警列表 -->
+                    <div v-if="warnings.length" style="background:#fff;border-radius:10px;padding:16px;max-height:400px;overflow-y:auto">
+                        <div v-for="(warning,i) in warnings" :key="i" style="display:flex;align-items:flex-start;padding:14px;margin-bottom:10px;background:#fef0f0;border-radius:8px;border-left:4px solid #f56c6c">
+                            <div style="font-size:24px;margin-right:12px">{{ warning.type==='score_decline'?'📉':warning.type==='low_score'?'❌':'📭' }}</div>
+                            <div style="flex:1">
+                                <div style="font-weight:600;font-size:14px;color:#303133;margin-bottom:4px">
+                                    {{ warning.studentName }}（{{ warning.studentId }}）
+                                </div>
+                                <div style="font-size:13px;color:#606266;line-height:1.6">
+                                    {{ warning.message }}
+                                </div>
+                                <div style="margin-top:8px;display:flex;gap:8px;align-items:center">
+                                    <el-tag size="mini" type="danger" effect="plain">{{ warning.level==='high'?'高危':warning.level==='medium'?'中等':'轻微' }}</el-tag>
+                                    <el-tag size="mini" type="warning" effect="plain">{{ warning.suggestion }}</el-tag>
+                                    <el-button size="mini" type="danger" icon="el-icon-delete" circle @click="deleteWarning(i)" style="margin-left:auto" title="删除预警"></el-button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div v-else style="text-align:center;padding:40px;background:#fff;border-radius:10px">
+                        <div style="font-size:48px;margin-bottom:12px">✅</div>
+                        <p style="color:#67c23a;font-size:15px;font-weight:600">暂无学情预警</p>
+                        <p style="color:#909399;font-size:13px;margin-top:6px">所有学生学习状态良好！</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ========== TAB 4: 学生管理 ========== -->
+            <div v-show="currentTab==='students'">
+                <h3 style="margin-bottom:16px;color:#303133">👨‍🎓 学生信息列表</h3>
+                <div v-loading="loading" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px">
+                    <div v-for="s in students" :key="s.id" class="card">
+                        <div class="card-title">{{ s.realName }}</div>
+                        <div class="card-meta" style="flex-direction:column;gap:6px">
+                            <span>🎓 学号：{{ s.studentId }}</span>
+                            <span>📧 {{ s.email||'暂无邮箱' }}</span>
+                            <span>📱 {{ s.phone||'暂无电话' }}</span>
+                            <span>🏫 班级：{{ s.classes||'未分配' }}</span>
+                        </div>
+                        <div class="btn-row">
+                            <el-button size="mini" type="primary" @click="editStudent(s)">编辑</el-button>
+                            <el-button size="mini" type="danger" @click="delStudent(s)">删除</el-button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ========== TAB 5: 教师信息 ========== -->
+            <div v-show="currentTab==='teachers'">
+                <h3 style="margin-bottom:16px;color:#303133">👨‍🏫 教师信息列表</h3>
+                <div v-loading="loading" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px">
+                    <div v-for="t in teachers" :key="t.id" class="card">
+                        <div class="card-title">{{ t.realName }}</div>
+                        <div class="card-meta" style="flex-direction:column;gap:6px">
+                            <span>🆔 工号：{{ t.teacherId }}</span>
+                            <span>📧 {{ t.email||'暂无邮箱' }}</span>
+                            <span>📱 {{ t.phone||'暂无电话' }}</span>
+                            <span>🏛️ 院系：{{ t.department||'未分配' }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div><!-- /content -->
+
+        <!-- 新建/编辑作业对话框 -->
+        <el-dialog :title="editingId ? '编辑作业' : '新建作业'" :visible.sync="showNewDlg" width="520px">
+            <el-form :model="af" label-width="70px">
+                <el-form-item label="标题" required><el-input v-model="af.title" placeholder="如：第三章练习题"></el-input></el-form-item>
+                <el-form-item label="课程ID" required><el-input v-model="af.courseId" placeholder="如：CS101"></el-input></el-form-item>
+                <el-form-item label="截止时间"><el-date-picker v-model="af.dueDate" type="datetime" value-format="yyyy-MM-dd HH:mm:ss" style="width:100%"></el-date-picker></el-form-item>
+                <el-form-item label="总分"><el-input-number v-model="af.totalScore" :min="1" :max="200"></el-input-number></el-form-item>
+                <el-form-item label="要求"><el-input v-model="af.description" type="textarea" :rows="4" placeholder="描述作业要求..."></el-input></el-form-item>
+            </el-form>
+            <template #footer>
+                <el-button @click="showNewDlg=false">取消</el-button>
+                <el-button type="primary" @click="saveAssign" :loading="creating">{{ editingId ? '保存' : '创建' }}</el-button>
+            </template>
+        </el-dialog>
+    </div><!-- /main -->
+</div>
+
+<!-- 第三方库 -->
+<script src="lib/vue/vue.min.js"></script>
+<script src="lib/element-ui/index.js"></script>
+<script src="lib/echarts/echarts.min.js"></script>
+
+<!-- 业务逻辑 -->
+<script src="js/teacher.js"></script>
+</body>
+</html>

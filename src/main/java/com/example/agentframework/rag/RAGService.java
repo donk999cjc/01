@@ -159,7 +159,7 @@ public class RAGService {
         return prompt.toString();
     }
 
-    private List<String> chunkText(String text) {
+    public List<String> chunkText(String text) {
         if (text == null || text.isEmpty()) {
             return Collections.singletonList("");
         }

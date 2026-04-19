@@ -19,7 +19,7 @@ public interface AssignmentMapper {
     @Select("SELECT * FROM assignment")
     List<Assignment> findAll();
 
-    @Insert("INSERT INTO assignment(assignment_id, course_id, title, content, description, total_score, status, due_date, deadline, created_at) VALUES(#{assignmentId}, #{courseId}, #{title}, #{content}, #{description}, #{totalScore}, #{status}, #{dueDate}, #{deadline}, NOW())")
+    @Insert("INSERT INTO assignment(assignment_id, course_id, title, content, description, total_score, status, due_date, deadline, created_at, file_path, file_name) VALUES(#{assignmentId}, #{courseId}, #{title}, #{content}, #{description}, #{totalScore}, #{status}, #{dueDate}, #{deadline}, NOW(), #{filePath}, #{fileName})")
     @Options(useGeneratedKeys = true, keyProperty = "id")
     int insert(Assignment assignment);
 
@@ -35,6 +35,8 @@ public interface AssignmentMapper {
             "<if test='status != null'>status=#{status},</if>" +
             "<if test='dueDate != null'>due_date=#{dueDate},</if>" +
             "<if test='deadline != null'>deadline=#{deadline},</if>" +
+            "<if test='filePath != null'>file_path=#{filePath},</if>" +
+            "<if test='fileName != null'>file_name=#{fileName},</if>" +
             "</set>" +
             "WHERE id=#{id}" +
             "</script>")

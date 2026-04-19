@@ -109,9 +109,9 @@ public class RAGController {
     }
 
     @GetMapping("/status")
-    public ResponseEntity<Map<String, Object>> getStatus() {
-        Map<String, Object> status = ragService.getStatus();
-        status.put("success", true);
+    public ResponseEntity<Map<String, Boolean>> getStatus() {
+        Map<String, Boolean> status = new HashMap<>();
+        status.put("vectorStoreAvailable", true);
         return ResponseEntity.ok(status);
     }
 }

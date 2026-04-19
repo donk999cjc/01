@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.agentframework.mapper.TeacherMapper">
+
+    <resultMap id="TeacherResult" type="com.example.agentframework.entity.Teacher">
+        <id property="id" column="id"/>
+        <result property="teacherId" column="teacher_id"/>
+        <result property="username" column="username"/>
+        <result property="password" column="password"/>
+        <result property="realName" column="real_name"/>
+        <result property="email" column="email"/>
+        <result property="phone" column="phone"/>
+        <result property="department" column="department"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+    </resultMap>
+
+    <select id="findAll" resultMap="TeacherResult">
+        SELECT * FROM teacher ORDER BY created_at DESC
+    </select>
+
+    <select id="findById" resultMap="TeacherResult">
+        SELECT * FROM teacher WHERE id = #{id}
+    </select>
+
+    <select id="findByTeacherId" resultMap="TeacherResult">
+        SELECT * FROM teacher WHERE teacher_id = #{teacherId}
+    </select>
+
+    <select id="findByDepartment" resultMap="TeacherResult">
+        SELECT * FROM teacher WHERE department = #{department} ORDER BY real_name
+    </select>
+
+    <insert id="insert" parameterType="com.example.agentframework.entity.Teacher" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO teacher (teacher_id, username, password, real_name, email, phone, department, created_at, updated_at)
+        VALUES (#{teacherId}, #{username}, #{password}, #{realName}, #{email}, #{phone}, #{department}, NOW(), NOW())
+    </insert>
+
+    <update id="update" parameterType="com.example.agentframework.entity.Teacher">
+        UPDATE teacher
+        SET real_name = #{realName},
+            email = #{email},
+            phone = #{phone},
+            department = #{department},
+            updated_at = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById" parameterType="java.lang.Long">
+        DELETE FROM teacher WHERE id = #{id}
+    </delete>
+
+</mapper>

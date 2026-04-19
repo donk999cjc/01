@@ -50,15 +50,15 @@ public class AssignmentController {
             System.out.println("   截止时间: " + assignment.getDueDate());
             System.out.println("   总分: " + assignment.getTotalScore());
             System.out.println("   描述: " + assignment.getDescription());
-            
+
             Assignment createdAssignment = assignmentService.createAssignment(assignment);
-            
+
             System.out.println("✅ 作业创建成功! ID: " + createdAssignment.getId());
             return new ResponseEntity<>(createdAssignment, HttpStatus.CREATED);
         } catch (Exception e) {
             System.err.println("❌ 创建作业失败: " + e.getMessage());
             e.printStackTrace();
-            
+
             Map<String, Object> errorResult = new HashMap<>();
             errorResult.put("success", false);
             errorResult.put("message", "创建作业失败: " + e.getMessage());
@@ -380,5 +380,57 @@ public class AssignmentController {
             }
         });
         return new ResponseEntity<>(submissions, HttpStatus.OK);
+    }
+    //上传作业
+    @PostMapping("/{id}/upload-attachment")
+    public ResponseEntity<?> uploadAttachment(
+            @PathVariable Long id,
+            @RequestParam("file") MultipartFile file) {
+        try {
+            System.out.println("📎 收到附件上传请求: " + file.getOriginalFilename());
+            System.out.println("   文件大小: " + (file.getSize() / 1024) + " KB");
+            System.out.println("   作业ID: " + id);
+
+            // 1. 获取作业
+            Assignment assignment = assignmentService.getAssignmentById(id).orElse(null);
+            if (assignment == null) {
+                System.err.println("❌ 作业不存在，ID: " + id);
+                return ResponseEntity.badRequest().body("作业不存在，请先创建作业");
+            }
+
+            // 2. 保存文件
+            String savedPath = fileStorageService.saveSubmissionImage(file, "teacher", String.valueOf(id));
+            String fileName = file.getOriginalFilename();
+
+            // 构建可访问的URL路径（供前端使用）
+            String fileUrl = "/api/files/" + savedPath;
+
+            System.out.println("✅ 文件已保存到: " + savedPath);
+            System.out.println("   访问URL: " + fileUrl);
+
+            // 3. 更新作业的文件信息
+            assignment.setFilePath(fileUrl);      // 设置完整访问路径
+            assignment.setFileName(fileName);       // 保存原始文件名
+
+            // 4. 【关键】更新到数据库（使用包含filePath/fileName的UPDATE语句）
+            assignmentService.updateAssignment(id, assignment);
+
+            System.out.println("✅ 数据库已更新！filePath=" + fileUrl + ", fileName=" + fileName);
+
+            // 返回成功信息（包含文件路径）
+            java.util.Map<String, Object> result = new java.util.HashMap<>();
+            result.put("success", true);
+            result.put("message", "上传成功并已保存到数据库");
+            result.put("url", fileUrl);
+            result.put("fileName", fileName);
+            result.put("savedPath", savedPath);
+
+            return ResponseEntity.ok(result);
+
+        } catch (Exception e) {
+            System.err.println("❌ 上传失败: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.badRequest().body("上传失败：" + e.getMessage());
+        }
     }
 }
